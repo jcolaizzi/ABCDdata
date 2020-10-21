@@ -1,0 +1,435 @@
+# OUTPUTS:  individual subject-based files (demographics,parenting,family history,adverse events,mental health,neurocog,other health)
+#           all bx data (no imaging or biospecimens) df as ABCD_all_bx_data.Rds
+#           baseline subset as ABCD_BASE_bx_data.Rds
+#           year 1 subset as ABCD_YEAR1_bx_data.Rds
+#           mid year subsets as ABCD_6MO_bx_data.Rds and ABCD_18MO_bx_data.Rds
+
+
+# R Code:  
+library(boot)
+library(readxl)
+library(psych)
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+
+#rm(list=ls())
+
+# Data Directory
+data.dir <- "/Volumes/labs/ABCD_studydata/2.4.20_Rds/ABCD_releases_2.0.1_Rds/"
+script.dir <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data"
+setwd(script.dir)
+
+# Read in the huge data file
+nda2.0file <- paste0(data.dir,"nda2.0.1.Rds")
+nda18 <- readRDS(nda2.0file)
+
+#get the variable names
+varlist2.0 <- names(nda18)
+write.csv(varlist2.0,"nda18_2.0varnames.csv")
+
+#changes in variables names between releases
+#abcd_varnames2 <- names(nda17)
+#abcd_n2 <- as.vector(abcd_varnames2)
+#abcd_n <- as.vector(abcd_varnames)
+#vardiff <- setdiff(abcd_n2,abcd_n)
+#vardiff <- abcd_n[!(abcd_n %in% abcd_n2)]
+#write.csv(abcd_varnames2,"nda17_1.0varnames.csv")
+#write.csv(vardiff,"nda17_1.0_1.1_diffs.csv")
+
+
+# Function to load Rdata file:
+loadRData <- function(fileName){
+  #loads an RData file, and returns it
+  load(fileName)
+  get(ls()[ls() != "fileName"])
+}
+
+###
+# Twin
+###
+isTwin = rep("999", length(nda18$race.ethnicity))
+twinRecruitmentSites = c("site14", "site02", "site20", "site19")
+idx <- which(nda18$abcd_site %in% twinRecruitmentSites & nda18$rel_relationship == "twin",arr.ind = TRUE)
+isTwin[idx] <- TRUE
+isTwin[-idx] <- FALSE
+nda18$isTwin <- factor(isTwin)
+
+###
+# family ID
+###
+nda18$FamilyID <- nda18$rel_family_id 
+
+varlist2.0 <- names(nda18)
+
+###################################################
+# Code Chunks for different subsets
+###################################################
+
+####################################################
+# Demographics 
+####################################################
+# Basic Subject Identifiers
+demovars <- c("abcd_site","subjectid","interview_date","age","sex",
+              "household.income","household.income.bl",
+              "high.educ","high.educ.bl",
+              "married","married.bl",
+              "married.or.livingtogether","married.or.livingtogether.bl",
+              "race_ethnicity","race.4level","race.6level",
+              "anthro_bmi_calc","anthro_1_height_in","anthro_weight1_lb","isTwin",
+              "demo_prnt_age_p","FamilyID")
+
+# demovars %in% varlist2.0
+
+demo <- nda18[c("src_subject_id","eventname",demovars)]
+
+#####
+#SAVE
+saveRDS(demo, file = "nda18_2.01_demovars.RDATA")
+demodb <- readRDS("nda18_2.01_demovars.RDATA")
+
+################
+# Family and Parenting Variables
+################
+# rename the variable psb_y_ss_mean to prosocial_ss_mean_y
+colnames(nda18)[colnames(nda18)=="psb_y_ss_mean"] <- "prosocial_ss_mean_y"
+varlist2.0 <- names(nda18)
+
+#Family Environment and Conflict 
+socs <- varlist2.0[grep("fes",varlist2.0)]
+socs <- socs[grep("_fc",socs)]
+socs <- socs[-grep("_nm",socs)]
+socs <- socs[-grep("_na",socs)]
+socs <- socs[-grep("_nt",socs)]
+socs <- socs[-grep("_pr",socs)]
+
+#CRPBI Parental Acceptance
+socs <- c(socs,varlist2.0[grep("crpbi",varlist2.0)])
+socs <- socs[-grep("_nm",socs)]
+socs <- socs[-grep("_nt",socs)]
+socs <- socs[-grep("acceptance",socs)]
+socs <- socs[-grep("id$",socs)]
+
+#Prosocial Behaviors
+socs <- c(socs,varlist2.0[grep("prosocial_ss",varlist2.0)])
+socs <- socs[-grep("_n",socs)]
+socs <- socs[-grep("answered",socs)]
+
+#Parental Monitoring
+socs <- c(socs,varlist2.0[grep("pmq_y_ss_mean",varlist2.0)])
+socs <- socs[-grep("_nm",socs)]
+socs <- socs[-grep("_nt",socs)]
+
+#Parent general bx
+socs <- c(socs,varlist2.0[grep("pgbi_p_ss",varlist2.0)])
+socs <- socs[-grep("_nm",socs)]
+socs <- socs[-grep("_nt",socs)]
+
+#Parental Substance Use
+socs <- c(socs,"asr_q92_p",
+                   "asr_q124_p",
+                   "asr_q125_p",
+                   "asr_q126_p")
+socs <- nda18[c("src_subject_id","eventname",c(socs))]
+
+#####
+#SAVE
+saveRDS(socs, file = "nda18_2.01_socs.RDATA")
+socsdb <- readRDS("nda18_2.01_socs.RDATA")
+
+
+################
+# Medical and Family Hx
+################
+#Family History Assessment Modules
+#Hx of substance use
+hx <- c("famhx_4_p",
+                 "fam_history_5_yes_no")
+
+#Hx of mental health
+hx <- c(hx,"famhx_7_yes_no_p",
+                  "famhx_8_yes_no_p",
+                  "famhx_9_yes_no_p",
+                  "famhx_10_yes_no_p",
+                  "famhx_11_yes_no_p", 
+                  "famhx_12_yes_no_p",
+                  "famhx_13_yes_no_p")
+
+# Medical History
+hx <- c(hx,varlist2.0[grep("medhx",varlist2.0)])
+hx <- hx[-grep("times",hx)]
+hx <- hx[-grep("language",hx)]
+
+# Developmental History 
+hx <- c(hx,varlist2.0[grep("devhx",varlist2.0)])
+hx <- hx[-grep("times",hx)]
+hx <- hx[-grep("language",hx)]
+
+#####
+#SAVE
+abcdchunk <- nda18[c("src_subject_id","eventname",c(hx))]
+saveRDS(abcdchunk, file = "nda18_2.01_famhx.RDATA")
+hxdb <- readRDS("nda18_2.01_famhx.RDATA")
+
+
+################
+# Adverse Events
+################
+
+#life events
+adverse <- varlist2.0[grep("ple_",varlist2.0)]
+adverse <- adverse[-grep("nt$",adverse)]
+adverse <- adverse[-grep("_nm$",adverse)]
+
+#life events youth report
+adverse <- c(adverse,varlist2.0[grep("ple_y",varlist2.0)])
+adverse <- adverse[-grep("nt$", adverse)]
+adverse <- adverse[-grep("_nm$",adverse)]
+
+#Bullying
+adverse <- c(adverse,"ksads_back_c_bully_p",  
+            "kbi_p_c_bully_l")
+
+# PTSD Parent Report
+adverse <- c(adverse,"ksads_ptsd_raw_754_p",
+            "ksads_ptsd_raw_755_p",
+            "ksads_ptsd_raw_756_p",
+            "ksads_ptsd_raw_757_p",
+            "ksads_ptsd_raw_758_p",
+            "ksads_ptsd_raw_759_p",
+            "ksads_ptsd_raw_760_p",
+            "ksads_ptsd_raw_761_p",
+            "ksads_ptsd_raw_762_p",
+            "ksads_ptsd_raw_763_p",
+            "ksads_ptsd_raw_764_p",
+            "ksads_ptsd_raw_765_p",
+            "ksads_ptsd_raw_766_p",
+            "ksads_ptsd_raw_767_p",
+            "ksads_ptsd_raw_768_p",
+            "ksads_ptsd_raw_769_p",
+            "ksads_ptsd_raw_770_p")
+
+
+#Community Risk and Protective Factors
+adverse <- c(adverse,"su_crpf_avail_1_p",
+              "su_crpf_avail_2_p",
+              "su_crpf_avail_3_p",
+              "su_crpf_avail_4_p",
+              "su_crpf_avail_5_p",
+              "su_crpf_avail_6_p", 
+              "su_crpf_avail_7_p",
+              "su_crpf_avail_8_p",
+              "su_crpf_avail_9_p")
+
+
+#Neighborhood Safety: SUM SCORE
+adverse <- c(adverse,"neighb_phenx_ss_mean_p")
+
+# Passive data collection variables - residential history:
+adverse <- c(adverse,varlist2.0[grep("reshist",varlist2.0)])
+
+#Economic Adversity (including food insecurity)
+adverse <- c(adverse,"demo_fam_exp1_v2b",
+                   "demo_fam_exp2_v2b",
+                   "demo_fam_exp3_v2b",
+                   "demo_fam_exp4_v2b",
+                   "demo_fam_exp5_v2b",
+                   "demo_fam_exp6_v2b", 
+                   "demo_fam_exp7_v2b",
+                   "demo_fam_exp1_v2_l",
+                   "demo_fam_exp2_v2_l",
+                   "demo_fam_exp3_v2_l",
+                   "demo_fam_exp4_v2_l",
+                   "demo_fam_exp5_v2_l",
+                   "demo_fam_exp6_v2_l",
+                   "demo_fam_exp7_v2_l")
+
+#####
+#SAVE
+abcdchunk <- nda18[c("src_subject_id","eventname",c(adverse))]
+saveRDS(abcdchunk, file = "nda18_2.01_Adversity.RDATA")
+adversedb <- readRDS("nda18_2.01_Adversity.RDATA")
+
+
+######################
+# Mental Health
+######################
+
+# Suicide Variables
+ment <- c("ksads_23_143_t",
+         "ksads_23_144_t",
+         "ksads_23_145_t",
+         "ksads_23_146_t",
+         "ksads_23_147_t",
+         "ksads_23_148_t",
+         "ksads_23_149_t",
+         "ksads_23_150_t",
+         "ksads_23_807_t",
+         "ksads_23_808_t",
+         "ksads_23_809_t",
+         "ksads_23_810_t",
+         "ksads_23_811_t",
+         "ksads_23_812_t",
+         "ksads_23_813_t",
+         "ksads_23_814_t",
+         "ksads_23_815_t",
+         "ksads_23_816_t",
+         "ksads_23_817_t",
+         "ksads_23_818_t",
+         "ksads_23_819_t",
+         "ksads_23_820_t",
+         "ksads_23_821_t",
+         "ksads_23_822_t",
+         "ksads_23_823_t",
+         "ksads_23_824_t",
+         "ksads_23_825_t",
+         "prosocial_q1",
+         "prosocial_q2",
+         "prosocial_q3",
+         "ksads_24_151_p",
+         "ksads_24_152_p",
+         "ksads_24_153_p",
+         "ksads_24_154_p",
+         "ksads_23_149_p",
+         "ksads_23_150_p",
+         "ksads_23_807_p",
+         "ksads_23_808_p",
+         "ksads_23_809_p",
+         "ksads_23_810_p",
+         "ksads_23_811_p",
+         "ksads_23_812_p",
+         "ksads_23_813_p",
+         "ksads_23_814_p",
+         "ksads_23_815_p",
+         "ksads_23_816_p",
+         "ksads_23_817_p",
+         "ksads_23_818_p",
+         "ksads_23_819_p",
+         "ksads_23_820_p",
+         "ksads_23_821_p",
+         "ksads_23_822_p",
+         "ksads_23_823_p",
+         "ksads_23_824_p",
+         "ksads_23_825_p")
+
+
+# Adult Self report questionnaire:
+#ASR scored variables
+ment <- c(ment,varlist2.0[grep("asr_scr",varlist2.0)])
+#ASR Item variables
+#ment <- c(ment,varlist2.0[grep("asr_q",varlist2.0)])
+
+# CBCL Variables
+ment <- c(ment,varlist2.0[grep("cbcl_scr_syn_",varlist2.0)])
+ment <- ment[-grep("nm$",ment)]
+ment <- ment[-grep("_m$",ment)]
+ment <- ment[-grep("_r$",ment)]
+
+# CBCL Item Variables
+#ment <- c(ment,varlist2.0[grep("cbcl",varlist2.0)])
+#ment <- ment[-grep("nm$",ment)]
+#ment <- ment[-grep("_m$",ment)]
+#ment <- ment[-grep("_r$",ment)]
+#ment <- ment[-grep("language",ment)]
+
+#UPPS variables
+ment <- c(ment,varlist2.0[grep("upps_y",varlist2.0)])
+ment <- ment[-grep("_nm",ment)]
+ment <- ment[-grep("_nt",ment)]
+
+# BIS BAS
+ment <- c(ment,varlist2.0[grep("bis_",varlist2.0)])
+ment <- ment[-grep("_nm",ment)]
+ment <- ment[-grep("_nt",ment)]
+ment <- ment[-grep("m_",ment)]
+
+#####
+#SAVE
+abcdchunk <- nda18[c("src_subject_id","eventname",c(ment))]
+saveRDS(abcdchunk, file = "nda18_2.01_mentalhealth.RDATA")
+mentdb <- readRDS("nda18_2.01_mentalhealth.RDATA")
+
+
+######################
+# Cognitive
+######################
+
+# Neurocog
+cog <- varlist2.0[grep("nihtbx_",varlist2.0)]
+cog <- cog[grep("agecorrected$",cog)]
+cog <- c(cog,"pea_ravlt_sd_trial_vi_tc","pea_ravlt_ld_trial_vii_tc","pea_wiscv_tss")
+
+#####
+#SAVE
+abcdchunk <- nda18[c("src_subject_id","eventname",c(cog))]
+saveRDS(abcdchunk, file = "nda18_2.01_cog.RDATA")
+cogdb <- readRDS("nda18_2.01_cog.RDATA")
+
+###################################################
+# Other Health and Behavior
+###################################################
+
+# Physical Activity
+health <- varlist2.0[grep("physical_",varlist2.0)]
+
+# Friends variables
+health <- c(health,varlist2.0[grep("resiliency",varlist2.0)])
+
+# Sports Activities
+health <- c(health,varlist2.0[grep("perwk",varlist2.0)])
+
+# Screen Variables:
+health <- c(health,varlist2.0[grep("screentime_",varlist2.0)])
+health <- health[-grep("language",health)]
+
+# Sleep Variables
+health <- c(health,varlist2.0[grep("sleep_",varlist2.0)])
+health <- health[-grep("postscan",health)]
+health <- health[-grep("language",health)]
+
+#Religion
+health <- c(health,"macvs_ss_r_p")
+
+#####
+#SAVE
+abcdchunk <- nda18[c("src_subject_id","eventname",c(health))]
+saveRDS(abcdchunk, file = "nda18_2.01_health.RDATA")
+healthdb <- readRDS("nda18_2.01_health.RDATA")
+
+
+###################################################
+# MERGE ALL DATA
+###################################################
+
+db_0 <- inner_join(demodb,socsdb, by=c("src_subject_id", "eventname"))
+db_1 <- inner_join(db_0,hxdb, by=c("src_subject_id", "eventname"))
+db_2 <- inner_join(db_1,adversedb, by=c("src_subject_id", "eventname"))
+db_3 <- inner_join(db_2,mentdb, by=c("src_subject_id", "eventname"))
+db_4 <- inner_join(db_3,cogdb, by=c("src_subject_id", "eventname"))
+alldata <- inner_join(db_4,healthdb, by=c("src_subject_id", "eventname"))
+
+saveRDS(alldata, file = "ABCD_all_bx_data.Rds")
+write.csv(alldata, file="ABCD_all_bx_data.csv")
+
+######### BASELINE AND YEAR 1 ############
+#subset to baseline only (11875)
+bsdata <- subset(alldata, eventname == "baseline_year_1_arm_1")
+saveRDS(bsdata, file = "ABCD_BASE_bx_data.Rds")
+write.csv(bsdata, file="ABCD_BASE_bx_data.csv")
+
+#subset to baseline + year 1  (4951)
+y1data <- subset(alldata, eventname == "1_year_follow_up_y_arm_1")
+saveRDS(y1data, file = "ABCD_YEAR1_bx_data.Rds")
+write.csv(y1data, file="ABCD_YEAR1_bx_data.csv")
+
+######### MID YEAR FOLLOW UPS ############
+#subset to 6 month follow up  (8623)
+mid1data <- subset(alldata, eventname == "6_month_follow_up_arm_1")
+saveRDS(mid1data, file = "ABCD_6MO_bx_data.Rds")
+write.csv(mid1data, file="ABCD_6MO_bx_data.csv")
+
+#subset to 18 month follow up  (1919)
+mid2data <- subset(alldata, eventname == "18_month_follow_up_arm_1")
+saveRDS(mid2data, file = "ABCD_18MO_bx_data.Rds")
+write.csv(mid2data, file="ABCD_18MO_bx_data.csv")

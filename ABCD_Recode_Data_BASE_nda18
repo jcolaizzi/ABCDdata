@@ -12,6 +12,8 @@ library(ggplot2)
 library(tidyverse)
 library(mosaic)
 library(optLog)
+
+# Function to load Rdata file:
 loadRData <- function(fileName){
   #loads an RData file, and returns it
   load(fileName)
@@ -25,8 +27,9 @@ loadRData <- function(fileName){
 data.dir <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/"
 setwd <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/Stress/ABCD_Gather_Data/"
 
-bs_data <- read.csv("/Volumes/Labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_data.csv")
-bs_data_num <- bs_data
+bsdata <- loadRData("/Volumes/Labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_data.RDATA") #loads bsdata df 
+bs_data_num <- bsdata
+
 
 ##############################################################
 ################ BASELINE RECODE/CALCULATE ###################
@@ -42,9 +45,6 @@ bs_data_num$sex <- recode(bs_data_num$sex,'M'=1,'F'=0)
 
 #income
 bs_data_num$household.income.bl <- recode(bs_data_num$household.income.bl,'[<50K]'= 1, '[>=50K & <100K]' = 2, '[>=100K]'= 3)
-
-#age
-bs_data_num$bs_age=bs_data_num$age
 
 #educ
 bs_data_num$high.educ.bl <- recode(bs_data_num$high.educ.bl,'< HS Diploma'= 1, 'HS Diploma/GED'= 2, 'Some College'=3, 'Bachelor' = 4, 'Post Graduate Degree' = 5)
@@ -69,6 +69,7 @@ bs_data_num$race.6level <- relevel(bs_data_num$race.6level, "White")
 #recode to numerics
 bs_data_num$race.6level_num <- recode(bs_data_num$race.6level,'White'= 1, 'Black'= 2, 'Mixed' =3, 'Other'=4, 'Asian' = 5, 'AIAN/NHPI'=6)
 
+
 #####################################
 ############## TRAUMA ###############
 #####################################
@@ -81,7 +82,7 @@ for(i in index){
 }
 
 #sum
-bs_data_num$ptsd_sum_bs <- with(bs_data_num, ksads_ptsd_raw_754_p+ksads_ptsd_raw_755_p+ksads_ptsd_raw_756_p+
+bs_data_num$ptsd_sum <- with(bs_data_num, ksads_ptsd_raw_754_p+ksads_ptsd_raw_755_p+ksads_ptsd_raw_756_p+
                              ksads_ptsd_raw_757_p+ksads_ptsd_raw_758_p+ksads_ptsd_raw_759_p+
                              ksads_ptsd_raw_760_p+ksads_ptsd_raw_761_p+ksads_ptsd_raw_762_p+
                              ksads_ptsd_raw_763_p+ksads_ptsd_raw_764_p+ksads_ptsd_raw_765_p+
@@ -89,7 +90,7 @@ bs_data_num$ptsd_sum_bs <- with(bs_data_num, ksads_ptsd_raw_754_p+ksads_ptsd_raw
                              ksads_ptsd_raw_769_p+ksads_ptsd_raw_770_p)
 
 #binary yes/no on all questions combined 
-bs_data_num$ptsd_binary_bs <- ifelse(bs_data_num$ptsd_sum == 0, 0, 1)
+bs_data_num$ptsd_binary <- ifelse(bs_data_num$ptsd_sum == 0, 0, 1)
 
 #####################################
 ####### FAMILY HISTORY  #############
@@ -118,7 +119,7 @@ for(i in index){
 }
 
 #sum
-bs_data_num$famhx_sum_bs <- with(bs_data_num, famhx_10_yes_no_p+famhx_13_yes_no_p+famhx_12_yes_no_p+famhx_11_yes_no_p+famhx_4_p+famhx_7_yes_no_p+famhx_8_yes_no_p+famhx_9_yes_no_p+famhx_5_yes_no_p)
+bs_data_num$famhx_sum <- with(bs_data_num, famhx_10_yes_no_p+famhx_13_yes_no_p+famhx_12_yes_no_p+famhx_11_yes_no_p+famhx_4_p+famhx_7_yes_no_p+famhx_8_yes_no_p+famhx_9_yes_no_p+famhx_5_yes_no_p)
 
 #####################################
 ####### ECONOMIC ADVERSITY ##########
@@ -141,7 +142,7 @@ for(i in index){
 }
 
 #sum
-bs_data_num$econo_sum_bs <- with(bs_data_num, demo_fam_exp1_v2b+
+bs_data_num$econo_sum <- with(bs_data_num, demo_fam_exp1_v2b+
                                  demo_fam_exp2_v2b+
                                  demo_fam_exp3_v2b+
                                  demo_fam_exp4_v2b+
@@ -150,7 +151,7 @@ bs_data_num$econo_sum_bs <- with(bs_data_num, demo_fam_exp1_v2b+
                                  demo_fam_exp7_v2b)
 
 #binary yes/no on all questions combined 
-bs_data_num$econo_binary_bs <- ifelse(bs_data_num$econo_sum_bs == 0, 0, 1)
+bs_data_num$econo_binary <- ifelse(bs_data_num$econo_sum == 0, 0, 1)
 
 #####################################
 ##### SUBSTANCE ACCESSIBILITY #######
@@ -185,26 +186,26 @@ bs_data_num$su_crpf_avail_9_p <- recode(bs_data_num$su_crpf_avail_9_p, "0"=0,"1-
 #bs_data_num$su_crpf_avail_6_p[is.na(bs_data_num$su_crpf_avail_6_p)] = 0
 #bs_data_num$su_crpf_avail_9_p[is.na(bs_data_num$su_crpf_avail_9_p)] = 0
 
-bs_data_num$crpf_sum_bs <- with(bs_data_num,su_crpf_avail_1_p,su_crpf_avail_2_p,su_crpf_avail_3_p,su_crpf_avail_4_p,
+bs_data_num$crpf_sum <- with(bs_data_num,su_crpf_avail_1_p,su_crpf_avail_2_p,su_crpf_avail_3_p,su_crpf_avail_4_p,
                               su_crpf_avail_5_p,su_crpf_avail_6_p,su_crpf_avail_7_p,su_crpf_avail_8_p,su_crpf_avail_9_p)
 
 #####################################
 #### FAMILY CONFLICT AND BULLYING ###
 #####################################
 #family conflict - as numeric
-bs_data_num$fes_ss_fc_p_bs <- as.numeric(as.integer(bs_data_num$fes_ss_fc_p))
-bs_data_num$fes_y_ss_fc_bs <- as.numeric(as.integer(bs_data_num$fes_y_ss_fc))
+bs_data_num$fes_ss_fc_p <- as.numeric(as.integer(bs_data_num$fes_ss_fc_p))
+bs_data_num$fes_y_ss_fc <- as.numeric(as.integer(bs_data_num$fes_y_ss_fc))
 
 #Bullying - recode 
-bs_data_num$ksads_back_c_bully_p_bs <- recode(bs_data_num$ksads_back_c_bully_p, '0'=0,'Yes'=1) 
+bs_data_num$ksads_back_c_bully_p <- recode(bs_data_num$ksads_back_c_bully_p, '0'=0,'Yes'=1) 
 
 #####################################
 ######### ASR: PARENT BX ############
 #####################################
 #criminal behaviors (trouble with the law)
-bs_data_num$asr_crime_bs <- recode(bs_data_num$asr_q92_p, 'Not True'=0,'Somewhat/Sometimes True'=1,'Very True/Often True'=2) 
+bs_data_num$asr_crime <- recode(bs_data_num$asr_q92_p, 'Not True'=0,'Somewhat/Sometimes True'=1,'Very True/Often True'=2) 
 #binary 
-bs_data_num$asr_crime_binary_bs <- ifelse(bs_data_num$asr_crime_bs == 0, 0, 1)
+bs_data_num$asr_crime_binary <- ifelse(bs_data_num$asr_crime == 0, 0, 1)
 
 #substance use - continuous 'how many times in the past 6 mo have you...'
 #ITEMS: 
@@ -219,11 +220,11 @@ for(i in index){
 }
 
 #sum
-bs_data_num$asr_substance_sum_bs <- c(bs_data_num$asr_q124_p+
+bs_data_num$asr_substance_sum <- c(bs_data_num$asr_q124_p+
                                         bs_data_num$asr_q125_p+
                                         bs_data_num$asr_q126_p)
 #binary
-bs_data_num$asr_substance_binary_bs <- ifelse(bs_data_num$asr_substance_sum_bs == 0, 0, 1)
+bs_data_num$asr_substance_binary <- ifelse(bs_data_num$asr_substance_sum == 0, 0, 1)
 
 #creating new variables recoded as dichotomous
 bs_data_num$asr_q124_p_yesno[bs_data_num$asr_q124_p > 0] <- "yes"
@@ -261,12 +262,11 @@ for(i in index){
 #load in data file that split the ple baseline and year 1 events ("happened before baseline" or "happened in the last year from year1 appt")
 ple_full <- loadRData("/Volumes/Labs/ABCD_studydata/workbench.Colaizzi/Stress/abcd_adversity_data_all_BASE.RData")
 ple_scores <- ple_full %>% select(c(contains("subject"),starts_with("ple_bs")))
-colnames(ple_scores)[colnames(ple_scores)=="subjectid.x"] <- "src_subject_id"  
 bs_data_num <- inner_join(bs_data_num,ple_scores, by="src_subject_id")
 
 #TOTALS
 #parent report total
-bs_data_num$ple_p_total_bs <- with(bs_data_num,ple_bs_died+
+bs_data_num$ple_p_total <- with(bs_data_num,ple_bs_died+
                                    ple_bs_newsib+
                                    ple_bs_newjob+
                                    ple_bs_step+  
@@ -291,11 +291,8 @@ bs_data_num$ple_p_total_bs <- with(bs_data_num,ple_bs_died+
                                    ple_bs_crime)                         
 #bs_data_num$ple_p_total_bs[is.na(bs_data_num$ple_p_total_bs)] = 0
 
-    #binary
-    bs_data_num$ple_p_binary_bs <- ifelse(bs_data_num$ple_p_total_bs == 0, 0, 1)
-
 #youth report total
-bs_data_num$ple_y_total_bs <- with(bs_data_num,ple_bs_y_died+
+bs_data_num$ple_y_total <- with(bs_data_num,ple_bs_y_died+
                                    ple_bs_y_newsib+
                                    ple_bs_y_newjob+
                                    ple_bs_y_step+  
@@ -319,267 +316,19 @@ bs_data_num$ple_y_total_bs <- with(bs_data_num,ple_bs_y_died+
                                    ple_bs_y_friend+
                                    ple_bs_y_crime)                         
 #bs_data_num$ple_y_total_bs[is.na(bs_data_num$ple_y_total_bs)] = 0
-    #binary
-    bs_data_num$ple_y_binary_bs <- ifelse(bs_data_num$ple_y_total_bs == 0, 0, 1)
 
-#totaling good or bad events. original coding: 0,1,2. recoding to yes/no as 1/0 and summing
-### PARENT REPORT BAD EVENTS ###
-bs_data_num$ple_bs_p_total_bad <- ifelse(bs_data_num$ple_bs_p_died_goodbad == 2,1,0) + ifelse(bs_data_num$ple_bs_p_injur_goodbad == 2,1,0)+
-  ifelse(bs_data_num$ple_bs_p_crime_goodbad == 2,1,0) +
-  ifelse(bs_data_num$ple_bs_p_friend_goodbad == 2,1,0)+ 
-  ifelse(bs_data_num$ple_bs_p_friend_injur_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_financial_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_sud_goodbad == 2,1,0)+ 
-  ifelse(bs_data_num$ple_bs_p_ill_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_injur_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_argue_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_job_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_away_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_arrest_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_friend_died_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_mh_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_sib_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_victim_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_separ_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_law_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_school_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_move_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_jail_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_step_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_new_job_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_new_sib_goodbad == 2,1,0)
-
-    #BINARY
-    bs_data_num$ple_bs_p_binary_bad <- ifelse(bs_data_num$ple_bs_p_total_bad == 0, 0, 1)
-
-#### PARENT REPORT HOW MUCH BAD EVENTS AFFECTED THE YOUTH ###
-bs_data_num$ple_bs_p_affect_bad_sum <- ifelse(bs_data_num$ple_bs_p_died_goodbad == 2,bs_data_num$ple_bs_y_died_affect,0) +
-  ifelse(bs_data_num$ple_bs_p_injured_goodbad == 2,bs_data_num$ple_bs_p_injured_affect,0) + ifelse(bs_data_num$ple_bs_p_crime_goodbad == 2,bs_data_num$ple_bs_p_crime_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_friend_goodbad == 2,bs_data_num$ple_bs_p_friend_affect,0) + ifelse(bs_data_num$ple_bs_p_friend_injur_goodbad == 2,bs_data_num$ple_bs_p_friend_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_financial_goodbad == 2,bs_data_num$ple_bs_p_financial_affect,0) + ifelse(bs_data_num$ple_bs_p_sud_goodbad == 2,bs_data_num$ple_bs_p_sud_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_ill_goodbad == 2,bs_data_num$ple_bs_p_ill_affect,0) + ifelse(bs_data_num$ple_bs_p_injur_goodbad == 2,bs_data_num$ple_bs_p_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_argue_goodbad == 2,bs_data_num$ple_bs_p_argue_affect,0) + ifelse(bs_data_num$ple_bs_p_job_goodbad == 2,bs_data_num$ple_bs_p_job_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_away_goodbad == 2,bs_data_num$ple_bs_p_away_affect,0) + ifelse(bs_data_num$ple_bs_p_arrest_goodbad == 2,bs_data_num$ple_bs_p_arrest_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_friend_died_goodbad == 2,bs_data_num$ple_bs_p_friend_died_affect,0) + ifelse(bs_data_num$ple_bs_p_mh_goodbad == 2,bs_data_num$ple_bs_p_mh_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_sib_goodbad == 2,bs_data_num$ple_bs_p_sib_affect,0) + ifelse(bs_data_num$ple_bs_p_victim_goodbad == 2,bs_data_num$ple_bs_p_victim_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_separ_goodbad == 2,bs_data_num$ple_bs_p_separ_affect,0) + ifelse(bs_data_num$ple_bs_p_law_goodbad == 2,bs_data_num$ple_bs_p_law_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_school_goodbad == 2,bs_data_num$ple_bs_p_school_affect,0) + ifelse(bs_data_num$ple_bs_p_move_goodbad == 2,bs_data_num$ple_bs_p_move_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_jail_goodbad == 2,bs_data_num$ple_bs_p_jail_affect,0) + ifelse(bs_data_num$ple_bs_p_step_goodbad == 2,bs_data_num$ple_bs_p_step_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_new_job_goodbad == 2,bs_data_num$ple_bs_p_new_job_affect,0) + ifelse(bs_data_num$ple_bs_p_new_sib_goodbad == 2,bs_data_num$ple_bs_p_new_sib_affect,0)
-    #MEAN
-    bs_data_num$ple_bs_p_affect_bad_mean <- ifelse(bs_data_num$ple_bs_p_total_bad >0,(bs_data_num$ple_bs_p_affect_bad_sum / bs_data_num$ple_bs_p_total_bad),0)
+#BINARY
+bs_data_num$ple_p_binary <- ifelse(bs_data_num$ple_p_total == 0, 0, 1)
+bs_data_num$ple_y_binary <- ifelse(bs_data_num$ple_y_total == 0, 0, 1)
+bs_data_num$ple_p_bad_binary <- ifelse(bs_data_num$ple_bs_p_total_bad == 0, 0, 1)
+bs_data_num$ple_p_affect_bad_binary <- ifelse(bs_data_num$ple_bs_p_affect_bad_sum == 0, 0, 1)
+bs_data_num$ple_p_good_binary <- ifelse(bs_data_num$ple_bs_p_total_good == 0, 0, 1)
+bs_data_num$ple_p_affect_good_binary <- ifelse(bs_data_num$ple_bs_p_affect_good_sum == 0, 0, 1)
+bs_data_num$ple_p_affect_binary <- ifelse(bs_data_num$ple_bs_p_sum_affect == 0, 0, 1)
+bs_data_num$ple_y_affect_bad_binary <- ifelse(bs_data_num$ple_bs_y_affect_bad_sum == 0, 0, 1)
+bs_data_num$ple_y_affect_good_binary <- ifelse(bs_data_num$ple_bs_y_affect_good_sum == 0, 0, 1)
+bs_data_num$ple_y_affect_binary <- ifelse(bs_data_num$ple_bs_y_sum_affect == 0, 0, 1)
     
-    #BINARY
-    bs_data_num$ple_bs_p_affect_bad_binary <- ifelse(bs_data_num$ple_bs_p_affect_bad_sum == 0, 0, 1)
-
-### GOOD EVENTS ###
-bs_data_num$ple_bs_p_total_good <- ifelse(bs_data_num$ple_bs_p_died_goodbad == 1,1,0) + ifelse(bs_data_num$ple_bs_p_injur_goodbad == 1,1,0)+
-  ifelse(bs_data_num$ple_bs_p_crime_goodbad == 1,1,0) +
-  ifelse(bs_data_num$ple_bs_p_friend_goodbad == 1,1,0)+ 
-  ifelse(bs_data_num$ple_bs_p_friend_injur_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_financial_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_sud_goodbad == 1,1,0)+ 
-  ifelse(bs_data_num$ple_bs_p_ill_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_injur_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_argue_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_job_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_away_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_arrest_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_friend_died_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_mh_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_sib_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_victim_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_separ_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_law_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_school_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_move_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_jail_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_step_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_new_job_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_p_new_sib_goodbad == 1,1,0)
-    #BINARY 
-    bs_data_num$ple_bs_p_binary_good <- ifelse(bs_data_num$ple_bs_p_total_good == 0, 0, 1)
-
-#### PARENT REPORT HOW MUCH GOOD EVENTS AFFECTED THE YOUTH ###
-bs_data_num$ple_bs_p_affect_good_sum <- ifelse(bs_data_num$ple_bs_p_died_goodbad == 1,bs_data_num$ple_bs_y_died_affect,0) +
-  ifelse(bs_data_num$ple_bs_p_injured_goodbad == 1,bs_data_num$ple_bs_p_injured_affect,0) + ifelse(bs_data_num$ple_bs_p_crime_goodbad == 1,bs_data_num$ple_bs_p_crime_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_friend_goodbad == 1,bs_data_num$ple_bs_p_friend_affect,0) + ifelse(bs_data_num$ple_bs_p_friend_injur_goodbad == 1,bs_data_num$ple_bs_p_friend_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_financial_goodbad == 1,bs_data_num$ple_bs_p_financial_affect,0) + ifelse(bs_data_num$ple_bs_p_sud_goodbad == 1,bs_data_num$ple_bs_p_sud_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_ill_goodbad == 1,bs_data_num$ple_bs_p_ill_affect,0) + ifelse(bs_data_num$ple_bs_p_injur_goodbad == 1,bs_data_num$ple_bs_p_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_argue_goodbad == 1,bs_data_num$ple_bs_p_argue_affect,0) + ifelse(bs_data_num$ple_bs_p_job_goodbad == 1,bs_data_num$ple_bs_p_job_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_away_goodbad == 1,bs_data_num$ple_bs_p_away_affect,0) + ifelse(bs_data_num$ple_bs_p_arrest_goodbad == 1,bs_data_num$ple_bs_p_arrest_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_friend_died_goodbad == 1,bs_data_num$ple_bs_p_friend_died_affect,0) + ifelse(bs_data_num$ple_bs_p_mh_goodbad == 1,bs_data_num$ple_bs_p_mh_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_sib_goodbad == 1,bs_data_num$ple_bs_p_sib_affect,0) + ifelse(bs_data_num$ple_bs_p_victim_goodbad == 1,bs_data_num$ple_bs_p_victim_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_separ_goodbad == 1,bs_data_num$ple_bs_p_separ_affect,0) + ifelse(bs_data_num$ple_bs_p_law_goodbad == 1,bs_data_num$ple_bs_p_law_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_school_goodbad == 1,bs_data_num$ple_bs_p_school_affect,0) + ifelse(bs_data_num$ple_bs_p_move_goodbad == 1,bs_data_num$ple_bs_p_move_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_jail_goodbad == 1,bs_data_num$ple_bs_p_jail_affect,0) + ifelse(bs_data_num$ple_bs_p_step_goodbad == 1,bs_data_num$ple_bs_p_step_affect,0) + 
-  ifelse(bs_data_num$ple_bs_p_new_job_goodbad == 1,bs_data_num$ple_bs_p_new_job_affect,0) + ifelse(bs_data_num$ple_bs_p_new_sib_goodbad == 1,bs_data_num$ple_bs_p_new_sib_affect,0)
-
-    #MEAN
-    bs_data_num$ple_bs_p_affect_good_mean <- ifelse(bs_data_num$ple_bs_p_total_good >0,(bs_data_num$ple_bs_p_affect_good_sum / bs_data_num$ple_bs_p_total_good),0)
-    
-    #BINARY 
-    bs_data_num$ple_bs_p_affect_good_binary <- ifelse(bs_data_num$ple_bs_p_affect_good_sum == 0, 0, 1)
-
-### TOTAL ANSWERS FOR AFFECT (GOOD + BAD) ###
-bs_data_num$ple_bs_p_total_affect <- bs_data_num$ple_bs_p_total_good + bs_data_num$ple_bs_p_total_bad #sum of 0s and 1s (yes/no) for good + bad
-#bs_data_num$ple_p_total_bs from above = sum of all events they said yes to. This is different from total affect bc affect can have an 'i don't know' 0 answer as well as NA
-
-### AFFECTED SUM TOTAL ###
-bs_data_num$ple_bs_p_sum_affect <- with(bs_data_num, ple_bs_p_died_affect + ple_bs_p_injur_affect +
-                                        ple_bs_p_crime_affect +
-                                        ple_bs_p_friend_affect + 
-                                        ple_bs_p_friend_injur_affect + 
-                                        ple_bs_p_financial_affect + 
-                                        ple_bs_p_sud_affect+ 
-                                        ple_bs_p_ill_affect + 
-                                        ple_bs_p_injur_affect  + 
-                                        ple_bs_p_argue_affect + 
-                                        ple_bs_p_job_affect + 
-                                        ple_bs_p_away_affect + 
-                                        ple_bs_p_arrest_affect + 
-                                        ple_bs_p_friend_died_affect + 
-                                        ple_bs_p_mh_affect  + 
-                                        ple_bs_p_sib_affect + 
-                                        ple_bs_p_victim_affect + 
-                                        ple_bs_p_separ_affect + 
-                                        ple_bs_p_law_affect  + 
-                                        ple_bs_p_school_affect + 
-                                        ple_bs_p_move_affect  + 
-                                        ple_bs_p_jail_affect + 
-                                        ple_bs_p_step_affect  + 
-                                        ple_bs_p_new_job_affect + 
-                                        ple_bs_p_new_sib_affect)
-    #MEAN
-    bs_data_num$ple_bs_p_affect_mean <- ifelse(bs_data_num$ple_bs_p_total_affect >0,(bs_data_num$ple_bs_p_sum_affect / bs_data_num$ple_bs_p_total_affect),0)
-    #BINARY 
-    bs_data_num$ple_bs_p_affect_binary <- ifelse(bs_data_num$ple_bs_p_sum_affect == 0, 0, 1)
-
-### YOUTH REPORT ###
-### BAD EVENTS ###
-bs_data_num$ple_bs_y_total_bad <- ifelse(bs_data_num$ple_bs_y_died_goodbad == 2,1,0) + ifelse(bs_data_num$ple_bs_y_injur_goodbad == 2,1,0)+
-  ifelse(bs_data_num$ple_bs_y_crime_goodbad == 2,1,0) +
-  ifelse(bs_data_num$ple_bs_y_friend_goodbad == 2,1,0)+ 
-  ifelse(bs_data_num$ple_bs_y_friend_injur_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_financial_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_sud_goodbad == 2,1,0)+ 
-  ifelse(bs_data_num$ple_bs_y_ill_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_injur_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_argue_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_job_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_away_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_arrest_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_friend_died_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_mh_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_sib_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_victim_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_separ_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_law_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_school_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_move_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_jail_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_step_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_newjob_goodbad == 2,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_newsib_goodbad == 2,1,0)
-
-bs_data_num$ple_bs_y_affect_bad_sum <- ifelse(bs_data_num$ple_bs_y_died_goodbad == 2,bs_data_num$ple_bs_y_died_affect,0) +
-  ifelse(bs_data_num$ple_bs_y_injured_goodbad == 2,bs_data_num$ple_bs_y_injured_affect,0) + ifelse(bs_data_num$ple_bs_y_crime_goodbad == 2,bs_data_num$ple_bs_y_crime_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_friend_goodbad == 2,bs_data_num$ple_bs_y_friend_affect,0) + ifelse(bs_data_num$ple_bs_y_friend_injur_goodbad == 2,bs_data_num$ple_bs_y_friend_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_financial_goodbad == 2,bs_data_num$ple_bs_y_financial_affect,0) + ifelse(bs_data_num$ple_bs_y_sud_goodbad == 2,bs_data_num$ple_bs_y_sud_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_ill_goodbad == 2,bs_data_num$ple_bs_y_ill_affect,0) + ifelse(bs_data_num$ple_bs_y_injur_goodbad == 2,bs_data_num$ple_bs_y_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_argue_goodbad == 2,bs_data_num$ple_bs_y_argue_affect,0) + ifelse(bs_data_num$ple_bs_y_job_goodbad == 2,bs_data_num$ple_bs_y_job_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_away_goodbad == 2,bs_data_num$ple_bs_y_away_affect,0) + ifelse(bs_data_num$ple_bs_y_arrest_goodbad == 2,bs_data_num$ple_bs_y_arrest_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_friend_died_goodbad == 2,bs_data_num$ple_bs_y_friend_died_affect,0) + ifelse(bs_data_num$ple_bs_y_mh_goodbad == 2,bs_data_num$ple_bs_y_mh_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_sib_goodbad == 2,bs_data_num$ple_bs_y_sib_affect,0) + ifelse(bs_data_num$ple_bs_y_victim_goodbad == 2,bs_data_num$ple_bs_y_victim_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_separ_goodbad == 2,bs_data_num$ple_bs_y_separ_affect,0) + ifelse(bs_data_num$ple_bs_y_law_goodbad == 2,bs_data_num$ple_bs_y_law_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_school_goodbad == 2,bs_data_num$ple_bs_y_school_affect,0) + ifelse(bs_data_num$ple_bs_y_move_goodbad == 2,bs_data_num$ple_bs_y_move_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_jail_goodbad == 2,bs_data_num$ple_bs_y_jail_affect,0) + ifelse(bs_data_num$ple_bs_y_step_goodbad == 2,bs_data_num$ple_bs_y_step_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_newjob_goodbad == 2,bs_data_num$ple_bs_y_newjob_affect,0) + ifelse(bs_data_num$ple_bs_y_newsib_goodbad == 2,bs_data_num$ple_bs_y_newsib_affect,0)
-    #MEAN
-    bs_data_num$ple_bs_y_affect_bad_mean <- ifelse(bs_data_num$ple_bs_y_total_bad >0,(bs_data_num$ple_bs_y_affect_bad_sum / bs_data_num$ple_bs_y_total_bad),0)
-    #BINARY 
-    bs_data_num$ple_bs_p_affect_bad_binary <- ifelse(bs_data_num$ple_bs_y_affect_bad_sum == 0, 0, 1)
-
-### GOOD EVENTS ###
-bs_data_num$ple_bs_y_total_good <- ifelse(bs_data_num$ple_bs_y_died_goodbad == 1,1,0) + ifelse(bs_data_num$ple_bs_y_injur_goodbad == 1,1,0)+
-  ifelse(bs_data_num$ple_bs_y_crime_goodbad == 1,1,0) +
-  ifelse(bs_data_num$ple_bs_y_friend_goodbad == 1,1,0)+ 
-  ifelse(bs_data_num$ple_bs_y_friend_injur_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_financial_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_sud_goodbad == 1,1,0)+ 
-  ifelse(bs_data_num$ple_bs_y_ill_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_injur_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_argue_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_job_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_away_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_arrest_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_friend_died_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_mh_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_sib_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_victim_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_separ_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_law_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_school_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_move_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_jail_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_step_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_newjob_goodbad == 1,1,0) + 
-  ifelse(bs_data_num$ple_bs_y_newsib_goodbad == 1,1,0)
-
-bs_data_num$ple_bs_y_affect_good_sum <- ifelse(bs_data_num$ple_bs_y_died_goodbad == 1,bs_data_num$ple_bs_y_died_affect,0) +
-  ifelse(bs_data_num$ple_bs_y_injured_goodbad == 1,bs_data_num$ple_bs_y_injured_affect,0) + ifelse(bs_data_num$ple_bs_y_crime_goodbad == 1,bs_data_num$ple_bs_y_crime_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_friend_goodbad == 1,bs_data_num$ple_bs_y_friend_affect,0) + ifelse(bs_data_num$ple_bs_y_friend_injur_goodbad == 1,bs_data_num$ple_bs_y_friend_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_financial_goodbad == 1,bs_data_num$ple_bs_y_financial_affect,0) + ifelse(bs_data_num$ple_bs_y_sud_goodbad == 1,bs_data_num$ple_bs_y_sud_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_ill_goodbad == 1,bs_data_num$ple_bs_y_ill_affect,0) + ifelse(bs_data_num$ple_bs_y_injur_goodbad == 1,bs_data_num$ple_bs_y_injur_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_argue_goodbad == 1,bs_data_num$ple_bs_y_argue_affect,0) + ifelse(bs_data_num$ple_bs_y_job_goodbad == 1,bs_data_num$ple_bs_y_job_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_away_goodbad == 1,bs_data_num$ple_bs_y_away_affect,0) + ifelse(bs_data_num$ple_bs_y_arrest_goodbad == 1,bs_data_num$ple_bs_y_arrest_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_friend_died_goodbad == 1,bs_data_num$ple_bs_y_friend_died_affect,0) + ifelse(bs_data_num$ple_bs_y_mh_goodbad == 1,bs_data_num$ple_bs_y_mh_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_sib_goodbad == 1,bs_data_num$ple_bs_y_sib_affect,0) + ifelse(bs_data_num$ple_bs_y_victim_goodbad == 1,bs_data_num$ple_bs_y_victim_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_separ_goodbad == 1,bs_data_num$ple_bs_y_separ_affect,0) + ifelse(bs_data_num$ple_bs_y_law_goodbad == 1,bs_data_num$ple_bs_y_law_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_school_goodbad == 1,bs_data_num$ple_bs_y_school_affect,0) + ifelse(bs_data_num$ple_bs_y_move_goodbad == 1,bs_data_num$ple_bs_y_move_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_jail_goodbad == 1,bs_data_num$ple_bs_y_jail_affect,0) + ifelse(bs_data_num$ple_bs_y_step_goodbad == 1,bs_data_num$ple_bs_y_step_affect,0) + 
-  ifelse(bs_data_num$ple_bs_y_newjob_goodbad == 1,bs_data_num$ple_bs_y_newjob_affect,0) + ifelse(bs_data_num$ple_bs_y_newsib_goodbad == 1,bs_data_num$ple_bs_y_newsib_affect,0)
-
-    #MEAN
-    bs_data_num$ple_bs_y_affect_good_mean <- ifelse(bs_data_num$ple_bs_y_total_good >0,(bs_data_num$ple_bs_y_affect_good_sum / bs_data_num$ple_bs_y_total_good),0)
-    #BINARY 
-    bs_data_num$ple_bs_y_affect_good_binary <- ifelse(bs_data_num$ple_bs_y_affect_good_sum == 0, 0, 1)
-
-### TOTAL ANSWERS FOR AFFECT (GOOD + BAD) ###
-bs_data_num$ple_bs_y_total_affect <- bs_data_num$ple_bs_y_total_good + bs_data_num$ple_bs_y_total_bad #sum of 0s and 1s (yes/no) for good + bad
-#bs_data_num$ple_p_total_bs from above = sum of all events they said yes to. This is different from total affect bc affect can have an 'i don't know' 0 answer as well as NA
-
-### AFFECTED SUM TOTAL ###
-bs_data_num$ple_bs_y_sum_affect <- with(bs_data_num, ple_bs_y_died_affect + ple_bs_y_injur_affect +
-                                        ple_bs_y_crime_affect +
-                                        ple_bs_y_friend_affect + 
-                                        ple_bs_y_friend_injur_affect + 
-                                        ple_bs_y_financial_affect + 
-                                        ple_bs_y_sud_affect+ 
-                                        ple_bs_y_ill_affect + 
-                                        ple_bs_y_injur_affect  + 
-                                        ple_bs_y_argue_affect + 
-                                        ple_bs_y_job_affect + 
-                                        ple_bs_y_away_affect + 
-                                        ple_bs_y_arrest_affect + 
-                                        ple_bs_y_friend_died_affect + 
-                                        ple_bs_y_mh_affect  + 
-                                        ple_bs_y_sib_affect + 
-                                        ple_bs_y_victim_affect + 
-                                        ple_bs_y_separ_affect + 
-                                        ple_bs_y_law_affect  + 
-                                        ple_bs_y_school_affect + 
-                                        ple_bs_y_move_affect  + 
-                                        ple_bs_y_jail_affect + 
-                                        ple_bs_y_step_affect  + 
-                                        ple_bs_y_newjob_affect + 
-                                        ple_bs_y_newsib_affect)
-    #MEAN
-    bs_data_num$ple_bs_y_affect_mean <- ifelse(bs_data_num$ple_bs_y_total_affect >0,(bs_data_num$ple_bs_y_sum_affect / bs_data_num$ple_bs_y_total_affect),0)
-    #BINARY 
-    bs_data_num$ple_bs_y_affect_binary <- ifelse(bs_data_num$ple_bs_y_sum_affect == 0, 0, 1)
-    
-
 
 #####################################
 ######### PHYSICAL HEALTH ###########
@@ -592,25 +341,23 @@ for(i in index){
     }
 
 #sum
-bs_data_num$physical_activity_sum_bs <- with(bs_data_num, physical_activity_1+
+bs_data_num$physical_activity_sum <- with(bs_data_num, physical_activity_1+
                                              physical_activity_2+
                                              physical_activity_5)
 
 # sleep
 #How many hours of sleep does your child get on most nights?
-bs_data_num$sleep_length_bs <- recode(bs_data_num$sleep_1_p, "Less than 5 hours"=1, "5-7 hours"=2, "7-8 hours"=3, "8-9 hours"=4, "9-11 hours"=5)
+bs_data_num$sleep_length <- recode(bs_data_num$sleep_1_p, "Less than 5 hours"=1, "5-7 hours"=2, "7-8 hours"=3, "8-9 hours"=4, "9-11 hours"=5)
 #How long after going to bed does your child usually fall asleep? 
-bs_data_num$sleep_delay_bs <- recode(bs_data_num$sleep_2_p, "Less than 15 minutes"=1, "15-30 minutes"=2, "30-45 minutes"=3, "45-60 minutes"=4, "More than 60 minutes"=5) 
+bs_data_num$sleep_delay <- recode(bs_data_num$sleep_2_p, "Less than 15 minutes"=1, "15-30 minutes"=2, "30-45 minutes"=3, "45-60 minutes"=4, "More than 60 minutes"=5) 
 
-#BMI
-bs_data_num$anthro_bmi_bs<-bs_data_num$anthro_bmi_calc
 
 #####################################
 ###### SCREEN MEDIA ACTIVITY ########
 #####################################
 #parent report
-bs_data_num$screentime_weekday_bs <- ((bs_data_num$screentime_1_hours_p*60) + bs_data_num$screentime_1_minutes_p)    #computer, cellphone, tablet, or other electronic device
-bs_data_num$screentime_weekend_bs <- ((bs_data_num$screentime_2_hours_p*60) + bs_data_num$screentime_2_minutes_p)    #computer, cellphone, tablet, or other electronic device
+bs_data_num$screentime_weekday <- ((bs_data_num$screentime_1_hours_p*60) + bs_data_num$screentime_1_minutes_p)    #computer, cellphone, tablet, or other electronic device
+bs_data_num$screentime_weekend <- ((bs_data_num$screentime_2_hours_p*60) + bs_data_num$screentime_2_minutes_p)    #computer, cellphone, tablet, or other electronic device
 
 #youth report
 index <- colnames(bs_data_num)[which(substr(colnames(bs_data_num),1,15) == "screentime_wkdy")]
@@ -628,81 +375,81 @@ for(i in index){
 bs_data_num$screentime_13 <-recode(bs_data_num$screentime_13, "Never"=0, "Once in a while"=1, "Regularly"=2, "All the time"=3)
 bs_data_num$screentime_14 <-recode(bs_data_num$screentime_14, "Never"=0, "Once in a while"=1, "Regularly"=2, "All the time"=3)
 
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_1"] <- "sma_wd_tvmovie_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_2"] <- "sma_wd_videos_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_3"] <- "sma_wd_games_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_4"] <- "sma_wd_texting_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_5"] <- "sma_wd_socialnetwork_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_6"] <- "sma_wd_chat_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_7"] <- "sma_we_tvmovie_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_8"] <- "sma_we_videos_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_9"] <- "sma_we_games_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_10"] <- "sma_we_texting_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_11"] <- "sma_we_socialnetwork_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_12"] <- "sma_we_chat_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_13"] <- "sma_xgames_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="screentime_14"] <- "sma_rmovies_bs"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_1"] <- "sma_wd_tvmovie"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_2"] <- "sma_wd_videos"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_3"] <- "sma_wd_games"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_4"] <- "sma_wd_texting"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_5"] <- "sma_wd_socialnetwork"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wkdy_6"] <- "sma_wd_chat"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_7"] <- "sma_we_tvmovie"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_8"] <- "sma_we_videos"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_9"] <- "sma_we_games"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_10"] <- "sma_we_texting"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_11"] <- "sma_we_socialnetwork"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_wknd_12"] <- "sma_we_chat"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_13"] <- "sma_xgames"
+colnames(bs_data_num)[colnames(bs_data_num)=="screentime_14"] <- "sma_rmovies"
 
 #SUM
 #### TOTALS BY TIME #####
 #weekday
-bs_data_num$sma_wd_sum_bs <- with(bs_data_num, sma_wd_socialnetwork_bs+
-                                  sma_wd_chat_bs+
-                                  sma_wd_tvmovie_bs+
-                                  sma_wd_videos_bs+
-                                  sma_wd_games_bs+
-                                  sma_wd_texting_bs)
+bs_data_num$sma_wd_sum <- with(bs_data_num, sma_wd_socialnetwork+
+                                  sma_wd_chat+
+                                  sma_wd_tvmovie+
+                                  sma_wd_videos+
+                                  sma_wd_games+
+                                  sma_wd_texting)
 #weekend
-bs_data_num$sma_we_sum_bs <- with(bs_data_num, sma_we_tvmovie_bs+
-                                  sma_we_videos_bs+
-                                  sma_we_games_bs+
-                                  sma_we_texting_bs+
-                                  sma_we_socialnetwork_bs+
-                                  sma_we_chat_bs)
+bs_data_num$sma_we_sum <- with(bs_data_num, sma_we_tvmovie+
+                                  sma_we_videos+
+                                  sma_we_games+
+                                  sma_we_texting+
+                                  sma_we_socialnetwork+
+                                  sma_we_chat)
 #x-rated
-bs_data_num$sma_xrated_sum_bs <- with(bs_data_num, sma_xgames_bs + bs_data_num$sma_rmovies_bs)
+bs_data_num$sma_xrated_sum <- with(bs_data_num, sma_xgames + bs_data_num$sma_rmovies)
 
 ##### TOTALS BY CATEGORIES ######    
 #total social    
-bs_data_num$sma_total_social_bs <- with(bs_data_num, sma_we_texting_bs+
-                                        sma_we_socialnetwork_bs+
-                                        sma_we_chat_bs+
-                                        sma_wd_socialnetwork_bs+
-                                        sma_wd_chat_bs+
-                                        sma_wd_texting_bs)
+bs_data_num$sma_total_social <- with(bs_data_num, sma_we_texting+
+                                        sma_we_socialnetwork+
+                                        sma_we_chat+
+                                        sma_wd_socialnetwork+
+                                        sma_wd_chat+
+                                        sma_wd_texting)
 #total video/passive    
-bs_data_num$sma_total_passive_bs <- with(bs_data_num, sma_we_tvmovie_bs+
-                                         sma_we_videos_bs+
-                                         sma_wd_tvmovie_bs+
-                                         sma_wd_videos_bs)
+bs_data_num$sma_total_passive <- with(bs_data_num, sma_we_tvmovie+
+                                         sma_we_videos+
+                                         sma_wd_tvmovie+
+                                         sma_wd_videos)
 #total gaming 
-bs_data_num$sma_total_game_bs <- with(bs_data_num, sma_we_games_bs+
-                                      sma_wd_games_bs)
+bs_data_num$sma_total_game <- with(bs_data_num, sma_we_games+
+                                      sma_wd_games)
 ##### TOTALS BY TIME AND CATEGORIES ######    
 #social    
-bs_data_num$sma_we_social_bs <- with(bs_data_num, sma_we_texting_bs+
-                                     sma_we_socialnetwork_bs+
-                                     sma_we_chat_bs)
-bs_data_num$sma_wd_social_bs <- with(bs_data_num, sma_wd_socialnetwork_bs+
-                                     sma_wd_chat_bs+
-                                     sma_wd_texting_bs)
+bs_data_num$sma_we_social <- with(bs_data_num, sma_we_texting+
+                                     sma_we_socialnetwork+
+                                     sma_we_chat)
+bs_data_num$sma_wd_social <- with(bs_data_num, sma_wd_socialnetwork+
+                                     sma_wd_chat+
+                                     sma_wd_texting)
 #video/passive    
-bs_data_num$sma_we_passive_bs <- with(bs_data_num, sma_we_tvmovie_bs+
-                                      sma_we_videos_bs)
-bs_data_num$sma_wd_passive_bs <- with(bs_data_num, sma_wd_tvmovie_bs+
-                                      sma_wd_videos_bs)
+bs_data_num$sma_we_passive <- with(bs_data_num, sma_we_tvmovie+
+                                      sma_we_videos)
+bs_data_num$sma_wd_passive <- with(bs_data_num, sma_wd_tvmovie+
+                                      sma_wd_videos)
 
 #gaming 
-bs_data_num$sma_we_game_bs <- with(bs_data_num, sma_we_games_bs)    
-bs_data_num$sma_wd_game_bs <- with(bs_data_num, sma_wd_games_bs)    
+bs_data_num$sma_we_game <- with(bs_data_num, sma_we_games)    
+bs_data_num$sma_wd_game <- with(bs_data_num, sma_wd_games)    
 
 # baseline and 1 year variable names
 smalabels <- c("sma_wd_tvmovie","sma_wd_videos","sma_wd_games","sma_wd_texting","sma_wd_socialnetwork","sma_wd_chat",
                "sma_we_tvmovie","sma_we_videos","sma_we_games","sma_we_texting","sma_we_socialnetwork","sma_we_chat")
-smavars_b <- paste0(smalabels,"_bs")
-smavars_soc_b <- c("sma_wd_social_bs","sma_we_social_bs")
-smavars_pass_b <- c("sma_wd_passive_bs","sma_we_passive_bs")
-smavars_gam_b <- c("sma_wd_game_bs","sma_we_game_bs")
+smavars_b <- paste0(smalabels,"")
+smavars_soc_b <- c("sma_wd_social","sma_we_social")
+smavars_pass_b <- c("sma_wd_passive","sma_we_passive")
+smavars_gam_b <- c("sma_wd_game","sma_we_game")
 
 
 # Calculate Baseline Screen Media Activity per Day
@@ -710,152 +457,109 @@ totweight <- c(5,5,5,5,5,5,2,2,2,2,2,2)/7
 socweight <- c(5,2)/7
 
 # Screen Media Time per day (texting, network, chatting)
-bs_data_num$sma_tot_bs = drop(as.matrix(bs_data_num[smavars_b]) %*% totweight)
-bs_data_num$sma_tot_social_bs = drop(as.matrix(bs_data_num[smavars_soc_b]) %*% socweight)
-bs_data_num$sma_tot_passive_bs = drop(as.matrix(bs_data_num[smavars_pass_b]) %*% socweight)
-bs_data_num$sma_tot_gaming_bs = drop(as.matrix(bs_data_num[smavars_gam_b]) %*% socweight)
+bs_data_num$sma_tot = drop(as.matrix(bs_data_num[smavars_b]) %*% totweight)
+bs_data_num$sma_tot_social = drop(as.matrix(bs_data_num[smavars_soc_b]) %*% socweight)
+bs_data_num$sma_tot_passive = drop(as.matrix(bs_data_num[smavars_pass_b]) %*% socweight)
+bs_data_num$sma_tot_gaming = drop(as.matrix(bs_data_num[smavars_gam_b]) %*% socweight)
 
 #####################################
 #### EXTRACURRICULAR ACTIVITIES #####
 #####################################
 index <- colnames(bs_data_num)[which(substr(colnames(bs_data_num),1,6) == "sai_ss")]
-#subset baseline only (as of data release 2.01, no data exists for year 1 extracurricular)
-index <- index[-grep("p_l",index)]
 
 for(i in index){
   bs_data_num[,i]<-recode(bs_data_num[,i], "Less than one day per month/"=1, "One day every month"=2, "Once every 2 weeks"=3, "1"=4, "2"=5, 
                           "3"=6, "Don't know"=0, "4"=7, "5"=8, "6"=9, "7"=10, "0"=0)
   #bs_data_num[is.na(bs_data_num[,i]),i] <- 0
 }
-#rename to make more sense
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_sboard_perwk_p"] <- "sai_ss_sboard_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_collect_perwk_p"] <- "sai_ss_collect_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_base_perwk_p"] <- "sai_ss_base_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_basket_perwk_p"] <- "sai_ss_basket_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_climb_perwk_p"] <- "sai_ss_climb_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_fhock_perwk_p"] <- "sai_ss_fhock_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_fball_perwk_p"] <- "sai_ss_fball_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_gym_perwk_p"] <- "sai_ss_gym_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_ihock_perwk_p"] <- "sai_ss_ihock_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_polo_perwk_p"] <- "sai_ss_polo_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_iskate_perwk_p"] <- "sai_ss_iskate_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_m_arts_perwk_p"] <- "sai_ss_m_arts_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_lax_perwk_p"] <- "sai_ss_lax_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_rugby_perwk_p"] <- "sai_ss_rugby_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_skate_perwk_p"] <- "sai_ss_skate_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_dance_perwk_p"] <- "sai_ss_dance_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_soc_perwk_p"] <- "sai_ss_soc_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_surf_perwk_p"] <- "sai_ss_surf_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_wpolo_perwk_p"] <- "sai_ss_wpolo_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_tennis_perwk_p"] <- "sai_ss_tennis_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_run_perwk_p"] <- "sai_ss_run_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_mma_perwk_p"] <- "sai_ss_mma_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_vball_perwk_p"] <- "sai_ss_vball_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_yoga_perwk_p"] <- "sai_ss_yoga_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_music_perwk_p"] <- "sai_ss_music_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_art_perwk_p"] <- "sai_ss_art_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_drama_perwk_p"] <- "sai_ss_drama_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_crafts_perwk_p"] <- "sai_ss_crafts_p_bs"
-colnames(bs_data_num)[colnames(bs_data_num)=="sai_ss_chess_perwk_p"] <- "sai_ss_chess_p_bs"
 
 #social enrichment sums
-bs_data_num$social_enrich_tot_bs <- as.numeric(bs_data_num$sai_ss_sboard_p_bs	+
-                                               bs_data_num$sai_ss_collect_p_bs	+
-                                               bs_data_num$sai_ss_base_p_bs	+
-                                               bs_data_num$sai_ss_basket_p_bs+	
-                                               bs_data_num$sai_ss_climb_p_bs	+
-                                               bs_data_num$sai_ss_fhock_p_bs	+
-                                               bs_data_num$sai_ss_fball_p_bs	+
-                                               bs_data_num$sai_ss_gym_p_bs	+
-                                               bs_data_num$sai_ss_ihock_p_bs+	
-                                               bs_data_num$sai_ss_polo_p_bs	+
-                                               bs_data_num$sai_ss_iskate_p_bs+	
-                                               bs_data_num$sai_ss_m_arts_p_bs	+
-                                               bs_data_num$sai_ss_lax_p_bs	+
-                                               bs_data_num$sai_ss_rugby_p_bs+	
-                                               bs_data_num$sai_ss_skate_p_bs+	
-                                               bs_data_num$sai_ss_dance_p_bs+	
-                                               bs_data_num$sai_ss_soc_p_bs	+
-                                               bs_data_num$sai_ss_surf_p_bs	+
-                                               bs_data_num$sai_ss_wpolo_p_bs+	
-                                               bs_data_num$sai_ss_tennis_p_bs+	
-                                               bs_data_num$sai_ss_run_p_bs	+
-                                               bs_data_num$sai_ss_mma_p_bs	+
-                                               bs_data_num$sai_ss_vball_p_bs+	
-                                               bs_data_num$sai_ss_yoga_p_bs	+
-                                               bs_data_num$sai_ss_music_p_bs+	
-                                               bs_data_num$sai_ss_art_p_bs	+
-                                               bs_data_num$sai_ss_drama_p_bs+	
-                                               bs_data_num$sai_ss_crafts_p_bs+	
-                                               bs_data_num$sai_ss_chess_p_bs)
+bs_data_num$social_enrich_tot <- with(bs_data_num, sai_ss_sboard_perwk_p	+
+                                               sai_ss_collect_perwk_p	+
+                                               sai_ss_base_perwk_p	+
+                                               sai_ss_basket_perwk_p+	
+                                               sai_ss_climb_perwk_p	+
+                                               sai_ss_fhock_perwk_p	+
+                                               sai_ss_fball_perwk_p	+
+                                               sai_ss_gym_perwk_p	+
+                                               sai_ss_ihock_perwk_p+	
+                                               sai_ss_polo_perwk_p	+
+                                               sai_ss_iskate_perwk_p+	
+                                               sai_ss_m_arts_perwk_p	+
+                                               sai_ss_lax_perwk_p	+
+                                               sai_ss_rugby_perwk_p+	
+                                               sai_ss_skate_perwk_p+	
+                                               sai_ss_dance_perwk_p+	
+                                               sai_ss_soc_perwk_p	+
+                                               sai_ss_surf_perwk_p	+
+                                               sai_ss_wpolo_perwk_p+	
+                                               sai_ss_tennis_perwk_p+	
+                                               sai_ss_run_perwk_p	+
+                                               sai_ss_mma_perwk_p	+
+                                               sai_ss_vball_perwk_p+	
+                                               sai_ss_yoga_perwk_p	+
+                                               sai_ss_music_perwk_p+	
+                                               sai_ss_art_perwk_p	+
+                                               sai_ss_drama_perwk_p+	
+                                               sai_ss_crafts_perwk_p+	
+                                               sai_ss_chess_perwk_p)
 
-bs_data_num$social_enrich_ARTS_tot_bs <- (bs_data_num$sai_ss_collect_p_bs	+
-                                          bs_data_num$sai_ss_music_p_bs+	
-                                          bs_data_num$sai_ss_art_p_bs	+
-                                          bs_data_num$sai_ss_drama_p_bs+	
-                                          bs_data_num$sai_ss_crafts_p_bs+	
-                                          bs_data_num$sai_ss_chess_p_bs)                        
-bs_data_num$social_enrich_TEAM_tot_bs <- (bs_data_num$sai_ss_base_p_bs	+
-                                          bs_data_num$sai_ss_basket_p_bs+	
-                                          bs_data_num$sai_ss_fhock_p_bs	+
-                                          bs_data_num$sai_ss_fball_p_bs	+
-                                          bs_data_num$sai_ss_ihock_p_bs+	
-                                          bs_data_num$sai_ss_polo_p_bs	+
-                                          bs_data_num$sai_ss_lax_p_bs	+
-                                          bs_data_num$sai_ss_rugby_p_bs+	
-                                          bs_data_num$sai_ss_soc_p_bs	+
-                                          bs_data_num$sai_ss_wpolo_p_bs+	
-                                          bs_data_num$sai_ss_tennis_p_bs+	
-                                          bs_data_num$sai_ss_vball_p_bs)
-bs_data_num$social_enrich_INDIV_tot_bs <- (bs_data_num$sai_ss_sboard_p_bs	+
-                                           bs_data_num$sai_ss_climb_p_bs	+
-                                           bs_data_num$sai_ss_gym_p_bs	+
-                                           bs_data_num$sai_ss_iskate_p_bs+	
-                                           bs_data_num$sai_ss_m_arts_p_bs	+
-                                           bs_data_num$sai_ss_skate_p_bs+	
-                                           bs_data_num$sai_ss_dance_p_bs+	
-                                           bs_data_num$sai_ss_surf_p_bs	+
-                                           bs_data_num$sai_ss_run_p_bs	+
-                                           bs_data_num$sai_ss_mma_p_bs	+
-                                           bs_data_num$sai_ss_yoga_p_bs)
+bs_data_num$social_enrich_ARTS_tot <- with(bs_data_num, sai_ss_collect_perwk_p	+
+                                          sai_ss_music_perwk_p+	
+                                          sai_ss_art_perwk_p	+
+                                          sai_ss_drama_perwk_p+	
+                                          sai_ss_crafts_perwk_p+	
+                                          sai_ss_chess_perwk_p)                        
+bs_data_num$social_enrich_TEAM_tot <- with(bs_data_num, sai_ss_base_perwk_p	+
+                                          sai_ss_basket_perwk_p+	
+                                          sai_ss_fhock_perwk_p	+
+                                          sai_ss_fball_perwk_p	+
+                                          sai_ss_ihock_perwk_p+	
+                                          sai_ss_polo_perwk_p	+
+                                          sai_ss_lax_perwk_p	+
+                                          sai_ss_rugby_perwk_p+	
+                                          sai_ss_soc_perwk_p	+
+                                          sai_ss_wpolo_perwk_p+	
+                                          sai_ss_tennis_perwk_p+	
+                                          sai_ss_vball_perwk_p)
+bs_data_num$social_enrich_INDIV_tot <- with(bs_data_num, sai_ss_sboard_perwk_p	+
+                                           sai_ss_climb_perwk_p	+
+                                           sai_ss_gym_perwk_p	+
+                                           sai_ss_iskate_perwk_p+	
+                                           sai_ss_m_arts_perwk_p	+
+                                           sai_ss_skate_perwk_p+	
+                                           sai_ss_dance_perwk_p+	
+                                           sai_ss_surf_perwk_p	+
+                                           sai_ss_run_perwk_p	+
+                                           sai_ss_mma_perwk_p	+
+                                           sai_ss_yoga_perwk_p)
 
 #####################################
 ############# OTHER #################
 #####################################
 
 #Religion
-bs_data_num$religion_bs=as.numeric(bs_data_num$macvs_ss_r_p)
+bs_data_num$religion=as.numeric(bs_data_num$macvs_ss_r_p)
 
-#neighborhood safety
-bs_data_num$neighb_safe_bs <- bs_data_num$neighb_phenx_ss_mean_p
-
-#prosocial behaviors - parent and youth report
-bs_data_num$prosocial_p_bs <- bs_data_num$prosocial_ss_mean_p
-bs_data_num$prosocial_y_bs <- bs_data_num$prosocial_ss_mean_y
-
-#parental monitoring 
-bs_data_num$pmq_bs <- bs_data_num$pmq_y_ss_mean
-
-#crpbi - parental acceptance
-bs_data_num$crpbi_studycaregiver_bs <- bs_data_num$crpbi_ss_studycaregiver
-bs_data_num$crpbi_caregiver_bs <- bs_data_num$crpbi_y_ss_caregiver
-
-#peer relationships 
-  #index <- colnames(bs_data_num)[which(substr(colnames(bs_data_num),1,10) == "resiliency")]
-  #for(i in index){
-  #  bs_data_num[is.na(bs_data_num[,i]),i] <- 0
-  #}
-
+#Peer Relationships
 #sum
-bs_data_num$resiliency_sum_bs <- with(bs_data_num, resiliency_5a+
+bs_data_num$resiliency_sum <- with(bs_data_num, resiliency_5a+
                                       resiliency_5b+
                                       resiliency_6a+
                                       resiliency_6b)
+#bs_data_num$resiliency_sum[is.na(bs_data_num$resiliency_sum)] = 0
+
+####################################
+##### LABEL AS BASELINE ############
+####################################
+
+icol <- which(names(bs_data_num) %in% c("src_subject_id", "eventname", "abcd_site", "subjectid", "isTwin","FamilyID"))
+colnames(bs_data_num)[-icol] <- paste(colnames(bs_data_num)[-icol], "bs", sep = "_")
 
 #####################################
 ############# SAVE ##################
 #####################################
-saveRDS(bs_data_num, file = "ABCD_BASE_bx_coded.RData.Rds")
-save(bs_data_num,file = "ABCD_BASE_bx_coded.RData.RData")
-write.csv(bs_data_num,file ="ABCD_BASE_bx_coded.RData.csv")  
+saveRDS(bs_data_num, file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_coded.Rds")
+save(bs_data_num,file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_coded.RData")
+write.csv(bs_data_num,file ="/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_coded.csv")  
 

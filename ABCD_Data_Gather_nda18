@@ -16,9 +16,9 @@ library(tidyverse)
 
 #rm(list=ls())
 
-# Data Directory
-data.dir <- "/Volumes/labs/ABCD_studydata/2.4.20_Rds/ABCD_releases_2.0.1_Rds/"
-script.dir <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data"
+# Set working, data, and script directories
+data.dir <- "/media/cephfs/labs/ABCD_studydata/2.4.20_Rds/ABCD_releases_2.0.1_Rds/"
+script.dir <- "_______________"
 setwd(script.dir)
 
 # Read in the huge data file

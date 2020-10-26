@@ -1,9 +1,9 @@
-# OUTPUTS:  individual subject-based files (demographics,parenting,family history,adverse events,mental health,neurocog,other health)
-#           all bx data (no imaging or biospecimens) df as ABCD_all_bx_data.Rds
+# OUTPUTS:  individual subject-based files (for MOST demographics,parenting,family history,adverse events,mental health,neurocog,other health variables)
+#           all bx data (no imaging) df as ABCD_all_bx_data.Rds
 #           baseline subset as ABCD_BASE_bx_data.Rds
 #           year 1 subset as ABCD_YEAR1_bx_data.Rds
 #           mid year subsets as ABCD_6MO_bx_data.Rds and ABCD_18MO_bx_data.Rds
- 
+
 
 # R Code:  
 library(boot)
@@ -87,7 +87,6 @@ demo <- nda18[c("src_subject_id","eventname",demovars)]
 #####
 #SAVE
 saveRDS(demo, file = "nda18_2.01_demovars.RDATA")
-demodb <- readRDS("nda18_2.01_demovars.RDATA")
 
 ################
 # Family and Parenting Variables
@@ -136,8 +135,6 @@ socs <- nda18[c("src_subject_id","eventname",c(socs))]
 #####
 #SAVE
 saveRDS(socs, file = "nda18_2.01_socs.RDATA")
-socsdb <- readRDS("nda18_2.01_socs.RDATA")
-
 
 ################
 # Medical and Family Hx
@@ -170,8 +167,6 @@ hx <- hx[-grep("language",hx)]
 #SAVE
 abcdchunk <- nda18[c("src_subject_id","eventname",c(hx))]
 saveRDS(abcdchunk, file = "nda18_2.01_famhx.RDATA")
-hxdb <- readRDS("nda18_2.01_famhx.RDATA")
-
 
 ################
 # Adverse Events
@@ -180,11 +175,6 @@ hxdb <- readRDS("nda18_2.01_famhx.RDATA")
 #life events
 adverse <- varlist2.0[grep("ple_",varlist2.0)]
 adverse <- adverse[-grep("nt$",adverse)]
-adverse <- adverse[-grep("_nm$",adverse)]
-
-#life events youth report
-adverse <- c(adverse,varlist2.0[grep("ple_y",varlist2.0)])
-adverse <- adverse[-grep("nt$", adverse)]
 adverse <- adverse[-grep("_nm$",adverse)]
 
 #Bullying
@@ -249,8 +239,6 @@ adverse <- c(adverse,"demo_fam_exp1_v2b",
 #SAVE
 abcdchunk <- nda18[c("src_subject_id","eventname",c(adverse))]
 saveRDS(abcdchunk, file = "nda18_2.01_Adversity.RDATA")
-adversedb <- readRDS("nda18_2.01_Adversity.RDATA")
-
 
 ######################
 # Mental Health
@@ -348,8 +336,6 @@ ment <- ment[-grep("m_",ment)]
 #SAVE
 abcdchunk <- nda18[c("src_subject_id","eventname",c(ment))]
 saveRDS(abcdchunk, file = "nda18_2.01_mentalhealth.RDATA")
-mentdb <- readRDS("nda18_2.01_mentalhealth.RDATA")
-
 
 ######################
 # Cognitive
@@ -364,7 +350,6 @@ cog <- c(cog,"pea_ravlt_sd_trial_vi_tc","pea_ravlt_ld_trial_vii_tc","pea_wiscv_t
 #SAVE
 abcdchunk <- nda18[c("src_subject_id","eventname",c(cog))]
 saveRDS(abcdchunk, file = "nda18_2.01_cog.RDATA")
-cogdb <- readRDS("nda18_2.01_cog.RDATA")
 
 ###################################################
 # Other Health and Behavior
@@ -395,12 +380,19 @@ health <- c(health,"macvs_ss_r_p")
 #SAVE
 abcdchunk <- nda18[c("src_subject_id","eventname",c(health))]
 saveRDS(abcdchunk, file = "nda18_2.01_health.RDATA")
+
+
+###################################################
+# LOAD AND MERGE ALL DATA
+###################################################
+
+demodb <- readRDS("nda18_2.01_demovars.RDATA")
+socsdb <- readRDS("nda18_2.01_socs.RDATA")
+hxdb <- readRDS("nda18_2.01_famhx.RDATA")
+adversedb <- readRDS("nda18_2.01_Adversity.RDATA")
+mentdb <- readRDS("nda18_2.01_mentalhealth.RDATA")
+cogdb <- readRDS("nda18_2.01_cog.RDATA")
 healthdb <- readRDS("nda18_2.01_health.RDATA")
-
-
-###################################################
-# MERGE ALL DATA
-###################################################
 
 db_0 <- inner_join(demodb,socsdb, by=c("src_subject_id", "eventname"))
 db_1 <- inner_join(db_0,hxdb, by=c("src_subject_id", "eventname"))
@@ -415,21 +407,25 @@ write.csv(alldata, file="ABCD_all_bx_data.csv")
 ######### BASELINE AND YEAR 1 ############
 #subset to baseline only (11875)
 bsdata <- subset(alldata, eventname == "baseline_year_1_arm_1")
-saveRDS(bsdata, file = "ABCD_BASE_bx_data.Rds")
+bsdata <- bsdata[,colSums(is.na(bsdata))<nrow(bsdata)]
+save(bsdata, file = "ABCD_BASE_bx_data.RDATA")
 write.csv(bsdata, file="ABCD_BASE_bx_data.csv")
 
 #subset to baseline + year 1  (4951)
 y1data <- subset(alldata, eventname == "1_year_follow_up_y_arm_1")
-saveRDS(y1data, file = "ABCD_YEAR1_bx_data.Rds")
+y1data <- y1data[,colSums(is.na(y1data))<nrow(y1data)]
+save(y1data, file = "ABCD_YEAR1_bx_data.RDATA")
 write.csv(y1data, file="ABCD_YEAR1_bx_data.csv")
 
 ######### MID YEAR FOLLOW UPS ############
 #subset to 6 month follow up  (8623)
 mid1data <- subset(alldata, eventname == "6_month_follow_up_arm_1")
-saveRDS(mid1data, file = "ABCD_6MO_bx_data.Rds")
+mid1data <- mid1data[,colSums(is.na(mid1data))<nrow(mid1data)]
+save(mid1data, file = "ABCD_6MO_bx_data.RDATA")
 write.csv(mid1data, file="ABCD_6MO_bx_data.csv")
 
 #subset to 18 month follow up  (1919)
 mid2data <- subset(alldata, eventname == "18_month_follow_up_arm_1")
-saveRDS(mid2data, file = "ABCD_18MO_bx_data.Rds")
+mid2data <- mid2data[,colSums(is.na(mid2data))<nrow(mid2data)]
+save(mid2data, file = "ABCD_18MO_bx_data.RDATA")
 write.csv(mid2data, file="ABCD_18MO_bx_data.csv")

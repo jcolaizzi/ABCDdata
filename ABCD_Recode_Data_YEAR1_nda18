@@ -1,5 +1,5 @@
 # Cleans and recodes Year 1 data from ABCD_Gather_Data. No imaging or biospecimen data. 
-#OUTPUTS: Year 1 data renamed, recoded, summed, averaged, etc. df = y1_data_num, file = "ABCD_YEAR1_bx_coded.RData"
+# OUTPUTS: Year 1 data renamed, recoded, summed, averaged, etc. df = y1_data_num, file = "ABCD_YEAR1_bx_coded.RData"
 
 # R Code:  
 library(boot)

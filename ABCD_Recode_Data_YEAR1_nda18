@@ -22,11 +22,12 @@ loadRData <- function(fileName){
   get(ls()[ls() != "fileName"])
 }
 
-# Data Directory
-data.dir <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/"
-setwd <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/"
+# Set Data and Working Directories
+data.dir <- "_________"
+setwd <- "_________"
 
-y1data <- loadRData("/Volumes/Labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_data.RDATA") #loads y1data df 
+#load year1 df created with ABCD_Gather_Data.R
+y1data <- loadRData("ABCD_YEAR1_bx_data.RDATA") #loads y1data df 
 y1_data_num <- y1data
 
 ##############################################################
@@ -444,7 +445,7 @@ colnames(y1_data_num)[-icol] <- paste(colnames(y1_data_num)[-icol], "y1", sep = 
 #####################################
 ############# SAVE ##################
 #####################################
-saveRDS(y1_data_num, file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_coded.Rds")
-save(y1_data_num,file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_coded.RData")
-write.csv(y1_data_num,file ="/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_coded.csv")  
+saveRDS(y1_data_num, file = "ABCD_YEAR1_bx_coded.Rds")
+save(y1_data_num,file = "ABCD_YEAR1_bx_coded.RData")
+write.csv(y1_data_num,file ="ABCD_YEAR1_bx_coded.csv")  
 

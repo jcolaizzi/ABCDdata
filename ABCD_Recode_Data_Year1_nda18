@@ -1,0 +1,450 @@
+# Cleans and recodes Year 1 data from ABCD_Gather_Data. No imaging or biospecimen data. 
+#OUTPUTS: Year 1 data renamed, recoded, summed, averaged, etc. df = y1_data_num, file = "ABCD_YEAR1_bx_coded.RData"
+
+# R Code:  
+library(boot)
+library(readxl)
+library(psych)
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(mosaic)
+library(optLog)
+
+#rm(list=ls())
+
+# Function to load Rdata file:
+loadRData <- function(fileName){
+  #loads an RData file, and returns it
+  load(fileName)
+  get(ls()[ls() != "fileName"])
+}
+
+# Data Directory
+data.dir <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/"
+setwd <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/"
+
+y1data <- loadRData("/Volumes/Labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_data.RDATA") #loads y1data df 
+y1_data_num <- y1data
+
+##############################################################
+################## YEAR 1 RECODE/CALCULATE ###################
+##############################################################
+#recoding to numerics and summing if necessary
+
+##############################################################
+###################### DEMOGRAPHICS ##########################
+##############################################################
+
+#sex
+y1_data_num$sex <- recode(y1_data_num$sex,'M'=1,'F'=0)
+
+#income
+y1_data_num$household.income.bl <- recode(y1_data_num$household.income.bl,'[<50K]'= 1, '[>=50K & <100K]' = 2, '[>=100K]'= 3)
+
+#educ
+y1_data_num$high.educ.bl <- recode(y1_data_num$high.educ.bl,'< HS Diploma'= 1, 'HS Diploma/GED'= 2, 'Some College'=3, 'Bachelor' = 4, 'Post Graduate Degree' = 5)
+
+#married
+y1_data_num$married.bl <- recode(y1_data_num$married.bl, 'no'= 1, 'yes'= 2)
+
+#married or living together
+y1_data_num$married.or.livingtogether.bl <- recode(y1_data_num$married.or.livingtogether.bl,'no'= 1, 'yes'= 2)
+
+#race
+#relevel to make the majority race the first factor
+y1_data_num$race_ethnicity <- as.factor(as.character(y1_data_num$race_ethnicity))
+y1_data_num$race_ethnicity <- relevel(y1_data_num$race_ethnicity, "White")
+#recode to numerics
+y1_data_num$race_ethnicity_num <- recode(y1_data_num$race_ethnicity,'White'= 1, 'Black'= 2, 'Hispanic' =3, 'Asian'=4, 'Other' = 5)
+
+#race.6level
+#relevel to make the majority race the first factor
+y1_data_num$race.6level <- as.factor(as.character(y1_data_num$race.6level))
+y1_data_num$race.6level <- relevel(y1_data_num$race.6level, "White")
+#recode to numerics
+y1_data_num$race.6level_num <- recode(y1_data_num$race.6level,'White'= 1, 'Black'= 2, 'Mixed' =3, 'Other'=4, 'Asian' = 5, 'AIAN/NHPI'=6)
+
+#####################################
+####### ECONOMIC ADVERSITY ##########
+#####################################
+#ITEMS:
+#demo_fam_exp1_v2_l  #no food
+#demo_fam_exp2_v2_l  #no telephone
+#demo_fam_exp3_v2_l  #no mortgage
+#demo_fam_exp4_v2_l  #evicted
+#demo_fam_exp5_v2_l  #no utilities
+#demo_fam_exp6_v2_l  #no medical care
+#demo_fam_exp7_v2_l  #no dental care
+
+#recode no = 0, yes = 1
+#can uncomment below if you want NAs to be coded as 0
+index <- paste0("demo_fam_exp",1:7,"_v2_l")
+for(i in index){
+  y1_data_num[,i]<-recode(y1_data_num[,i], "No"=0,"Yes"=1,"Refuse to answer" = 0)
+  #y1_data_num[is.na(y1_data_num[,i]),i] <- 0
+}
+
+#sum
+y1_data_num$econo_sum <- with(y1_data_num, demo_fam_exp1_v2_l+
+                                   demo_fam_exp2_v2_l+
+                                   demo_fam_exp3_v2_l+
+                                   demo_fam_exp4_v2_l+
+                                   demo_fam_exp5_v2_l+
+                                   demo_fam_exp6_v2_l+
+                                   demo_fam_exp7_v2_l)
+
+#binary yes/no on all questions combined 
+y1_data_num$econo_binary <- ifelse(y1_data_num$econo_sum == 0, 0, 1)
+
+#####################################
+##### SUBSTANCE ACCESSIBILITY #######
+#####################################
+#ITEMS: 
+#su_crpf_avail_1_p_num #alcohol
+#su_crpf_avail_2_p_num #cigarettes
+#su_crpf_avail_3_p_num #vape
+#su_crpf_avail_4_p_num #weed
+#su_crpf_avail_5_p_num #cocaine
+#su_crpf_avail_6_p_num #medical marijuana legal
+#su_crpf_avail_7_p_num #med marij
+#su_crpf_avail_8_p_num #rx med marij
+#su_crpf_avail_9_p_num #fam with marij rx
+
+#recoded with "very hard" and "don't know" as 0
+#can uncomment below if you want NAs to be also coded as 0
+index <- paste0("su_crpf_avail_",1:5,"_p")
+for(i in index){
+  y1_data_num[,i]<-recode(y1_data_num[,i], 'Very hard'=0,'Sort of hard'=1,'Sort of easy'=2,'Very easy'=3,"Don't know"=0)
+  #y1_data_num[is.na(y1_data_num[,i]),i] <- 0
+}
+
+index <- paste0("su_crpf_avail_",7:8,"_p")
+for(i in index){
+  y1_data_num[,i]<-recode(y1_data_num[,i], 'Very hard'=0,'Sort of hard'=1,'Sort of easy'=2,'Very easy'=3,"Don't know"=0)
+  #y1_data_num[is.na(y1_data_num[,i]),i] <- 0
+}
+
+y1_data_num$su_crpf_avail_6_p <- recode(y1_data_num$su_crpf_avail_6_p, 'No'=0,'Yes'=1,'I do not know'=0) 
+y1_data_num$su_crpf_avail_9_p <- recode(y1_data_num$su_crpf_avail_9_p, "0"=0,"1-3"=1,"4-6"=2,"7-9"=3,"Don't know"=0,"10 or more people"=4) 
+#y1_data_num$su_crpf_avail_6_p[is.na(y1_data_num$su_crpf_avail_6_p)] = 0
+#y1_data_num$su_crpf_avail_9_p[is.na(y1_data_num$su_crpf_avail_9_p)] = 0
+
+y1_data_num$crpf_sum  <- with(y1_data_num,su_crpf_avail_1_p,su_crpf_avail_2_p,su_crpf_avail_3_p,su_crpf_avail_4_p,
+                                su_crpf_avail_5_p,su_crpf_avail_6_p,su_crpf_avail_7_p,su_crpf_avail_8_p,su_crpf_avail_9_p)
+
+#####################################
+#### FAMILY CONFLICT AND BULLYING ###
+#####################################
+#family conflict - as numeric
+y1_data_num$fes_ss_fc_p  <- as.numeric(as.integer(y1_data_num$fes_ss_fc_p))
+y1_data_num$fes_y_ss_fc  <- as.numeric(as.integer(y1_data_num$fes_y_ss_fc))
+
+#Bullying - recode 
+y1_data_num$ksads_bully_p  <- recode(y1_data_num$kbi_p_c_bully_l, 'No'=0,'Yes'=1) 
+
+#####################################
+########### CBCL: TOTALS ############
+#####################################
+#Continuous scales as.numeric
+index <- colnames(y1_data_num)[which(substr(colnames(y1_data_num),1,12) == "cbcl_scr_syn")]
+for(i in index){
+  y1_data_num[,i]<-as.numeric(as.integer(y1_data_num[,i]))
+}
+
+##############################################################
+########## CODE LIFE EVENTS (PLE) MEAN AND SUM SCORES ########
+##############################################################
+#load in data file that split the ple baseline and year 1 events ("happened before baseline" or "happened in the last year from year1 appt")
+ple_full <- loadRData("/Volumes/labs/ABCD_studydata/workbench.Colaizzi/Stress/abcd_adversity_data_all_YEAR1.RData")
+ple_scores <- ple_full %>% select(c(contains("subject"),starts_with("ple_y1")))
+y1_data_num <- inner_join(y1_data_num,ple_scores, by="src_subject_id")
+
+   
+
+#TOTALS
+#parent report total
+y1_data_num$ple_p_total  <- with(y1_data_num,ple_y1_died+
+                                     ple_y1_newsib+
+                                     ple_y1_newjob+
+                                     ple_y1_step+  
+                                     ple_y1_jail+
+                                     ple_y1_move+
+                                     ple_y1_school+
+                                     ple_y1_law+
+                                     ple_y1_separ+
+                                     ple_y1_victim+
+                                     ple_y1_sib+
+                                     ple_y1_mh+
+                                     ple_y1_friend_died+
+                                     ple_y1_arrest+
+                                     ple_y1_away+
+                                     ple_y1_job+
+                                     ple_y1_argue+
+                                     ple_y1_ill+
+                                     ple_y1_sud+
+                                     ple_y1_financial+
+                                     ple_y1_friend_injur+                 
+                                     ple_y1_friend+
+                                     ple_y1_crime)                         
+#y1_data_num$ple_p_total[is.na(y1_data_num$ple_p_total)] = 0
+
+#binary
+y1_data_num$ple_p_binary <- ifelse(y1_data_num$ple_p_total == 0, 0, 1)
+
+#youth report total
+y1_data_num$ple_y_total <- with(y1_data_num,ple_y1_y_died+
+                                     ple_y1_y_newsib+
+                                     ple_y1_y_newjob+
+                                     ple_y1_y_step+  
+                                     ple_y1_y_jail+
+                                     ple_y1_y_move+
+                                     ple_y1_y_school+
+                                     ple_y1_y_law+
+                                     ple_y1_y_separ+
+                                     ple_y1_y_victim+
+                                     ple_y1_y_sib+
+                                     ple_y1_y_mh+
+                                     ple_y1_y_friend_died+
+                                     ple_y1_y_arrest+
+                                     ple_y1_y_away+
+                                     ple_y1_y_job+
+                                     ple_y1_y_argue+
+                                     ple_y1_y_ill+
+                                     ple_y1_y_sud+
+                                     ple_y1_y_financial+
+                                     ple_y1_y_friend_injur+                 
+                                     ple_y1_y_friend+
+                                     ple_y1_y_crime)                         
+#y1_data_num$ple_y_total[is.na(y1_data_num$ple_y_total)] = 0
+
+#BINARIZE
+y1_data_num$ple_y_binary <- ifelse(y1_data_num$ple_y_total  == 0, 0, 1)
+y1_data_num$ple_p_bad_binary <- ifelse(y1_data_num$ple_y1_p_total_bad == 0, 0, 1)
+y1_data_num$ple_p_affect_bad_binary <- ifelse(y1_data_num$ple_y1_p_affect_bad_sum == 0, 0, 1)
+y1_data_num$ple_p_good_binary <- ifelse(y1_data_num$ple_y1_p_total_good == 0, 0, 1)
+y1_data_num$ple_p_affect_good_binary <- ifelse(y1_data_num$ple_y1_p_affect_good_sum == 0, 0, 1)
+y1_data_num$ple_p_affect_binary <- ifelse(y1_data_num$ple_y1_p_sum_affect == 0, 0, 1)
+y1_data_num$ple_p_affect_bad_binary <- ifelse(y1_data_num$ple_y1_y_affect_bad_sum == 0, 0, 1) 
+y1_data_num$ple_y_affect_good_binary <- ifelse(y1_data_num$ple_y1_y_affect_good_sum == 0, 0, 1)
+y1_data_num$ple_y_affect_binary <- ifelse(y1_data_num$ple_y1_y_sum_affect == 0, 0, 1)
+
+
+#####################################
+######### PHYSICAL HEALTH ###########
+#####################################
+# sleep
+#How many hours of sleep does your child get on most nights?
+y1_data_num$sleep_length  <- recode(y1_data_num$sleep_1_p, "Less than 5 hours"=1, "5-7 hours"=2, "7-8 hours"=3, "8-9 hours"=4, "9-11 hours"=5)
+#How long after going to bed does your child usually fall asleep? 
+y1_data_num$sleep_delay  <- recode(y1_data_num$sleep_2_p, "Less than 15 minutes"=1, "15-30 minutes"=2, "30-45 minutes"=3, "45-60 minutes"=4, "More than 60 minutes"=5) 
+
+
+#####################################
+###### SCREEN MEDIA ACTIVITY ########
+#####################################
+#parent report
+y1_data_num$screentime_weekday  <- ((y1_data_num$screentime_1_hours_p*60) + y1_data_num$screentime_1_minutes_p)    #computer, cellphone, tablet, or other electronic device
+y1_data_num$screentime_weekend  <- ((y1_data_num$screentime_2_hours_p*60) + y1_data_num$screentime_2_minutes_p)    #computer, cellphone, tablet, or other electronic device
+
+#youth report
+index <- colnames(y1_data_num)[which(substr(colnames(y1_data_num),1,15) == "screentime_wkdy")]
+for(i in index){
+  y1_data_num[,i]<-recode(y1_data_num[,i], "None"=0, "< 30 minutes"=.25, ".5"=.5, "1 hour"=1, "2 hours"=2, "3 hours"=3, "4+ hours"=4)
+  #y1_data_num[is.na(y1_data_num[,i]),i] <- 0
+}
+
+index <- colnames(y1_data_num)[which(substr(colnames(y1_data_num),1,15) == "screentime_wknd")]
+for(i in index){
+  y1_data_num[,i]<-recode(y1_data_num[,i], "None"=0, ".25"=.25, ".5"=.5, "1 hour"=1, "2 hours"=2, "3 hours"=3, "4+ hours"=4)
+  #y1_data_num[is.na(y1_data_num[,i]),i] <- 0
+}
+
+y1_data_num$screentime_13 <-recode(y1_data_num$screentime_13, "Never"=0, "Once in a while"=1, "Regularly"=2, "All the time"=3)
+y1_data_num$screentime_14 <-recode(y1_data_num$screentime_14, "Never"=0, "Once in a while"=1, "Regularly"=2, "All the time"=3)
+
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wkdy_1"] <- "sma_wd_tvmovie"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wkdy_2"] <- "sma_wd_videos"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wkdy_3"] <- "sma_wd_games"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wkdy_4"] <- "sma_wd_texting"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wkdy_5"] <- "sma_wd_socialnetwork"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wkdy_6"] <- "sma_wd_chat"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wknd_7"] <- "sma_we_tvmovie"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wknd_8"] <- "sma_we_videos"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wknd_9"] <- "sma_we_games"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wknd_10"] <- "sma_we_texting"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wknd_11"] <- "sma_we_socialnetwork"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_wknd_12"] <- "sma_we_chat"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_13"] <- "sma_xgames"
+colnames(y1_data_num)[colnames(y1_data_num)=="screentime_14"] <- "sma_rmovies"
+
+#SUM
+#### TOTALS BY TIME #####
+#weekday
+y1_data_num$sma_wd_sum <- with(y1_data_num, sma_wd_socialnetwork+
+                                    sma_wd_chat+
+                                    sma_wd_tvmovie+
+                                    sma_wd_videos+
+                                    sma_wd_games+
+                                    sma_wd_texting)
+#weekend
+y1_data_num$sma_we_sum <- with(y1_data_num, sma_we_tvmovie+
+                                    sma_we_videos+
+                                    sma_we_games+
+                                    sma_we_texting+
+                                    sma_we_socialnetwork+
+                                    sma_we_chat)
+#x-rated
+y1_data_num$sma_xrated_sum <- with(y1_data_num, sma_xgames + y1_data_num$sma_rmovies)
+
+##### TOTALS BY CATEGORIES ######    
+#total social    
+y1_data_num$sma_total_social <- with(y1_data_num, sma_we_texting+
+                                          sma_we_socialnetwork+
+                                          sma_we_chat+
+                                          sma_wd_socialnetwork+
+                                          sma_wd_chat+
+                                          sma_wd_texting)
+#total video/passive    
+y1_data_num$sma_total_passive <- with(y1_data_num, sma_we_tvmovie+
+                                           sma_we_videos+
+                                           sma_wd_tvmovie+
+                                           sma_wd_videos)
+#total gaming 
+y1_data_num$sma_total_game <- with(y1_data_num, sma_we_games+
+                                        sma_wd_games)
+##### TOTALS BY TIME AND CATEGORIES ######    
+#social    
+y1_data_num$sma_we_social <- with(y1_data_num, sma_we_texting+
+                                       sma_we_socialnetwork+
+                                       sma_we_chat)
+y1_data_num$sma_wd_social <- with(y1_data_num, sma_wd_socialnetwork+
+                                       sma_wd_chat+
+                                       sma_wd_texting)
+#video/passive    
+y1_data_num$sma_we_passive <- with(y1_data_num, sma_we_tvmovie+
+                                        sma_we_videos)
+y1_data_num$sma_wd_passive <- with(y1_data_num, sma_wd_tvmovie+
+                                        sma_wd_videos)
+
+#gaming 
+y1_data_num$sma_we_game <- with(y1_data_num, sma_we_games)    
+y1_data_num$sma_wd_game <- with(y1_data_num, sma_wd_games)    
+
+# baseline and 1 year variable names
+smalabels <- c("sma_wd_tvmovie","sma_wd_videos","sma_wd_games","sma_wd_texting","sma_wd_socialnetwork","sma_wd_chat",
+               "sma_we_tvmovie","sma_we_videos","sma_we_games","sma_we_texting","sma_we_socialnetwork","sma_we_chat")
+smavars_soc_b <- c("sma_wd_social","sma_we_social")
+smavars_pass_b <- c("sma_wd_passive","sma_we_passive")
+smavars_gam_b <- c("sma_wd_game","sma_we_game")
+
+
+# Calculate Baseline Screen Media Activity per Day
+totweight <- c(5,5,5,5,5,5,2,2,2,2,2,2)/7
+socweight <- c(5,2)/7
+
+# Screen Media Time per day (texting, network, chatting)
+y1_data_num$sma_tot = drop(as.matrix(y1_data_num[smalabels]) %*% totweight)
+y1_data_num$sma_tot_social = drop(as.matrix(y1_data_num[smavars_soc_b]) %*% socweight)
+y1_data_num$sma_tot_passive = drop(as.matrix(y1_data_num[smavars_pass_b]) %*% socweight)
+y1_data_num$sma_tot_gaming = drop(as.matrix(y1_data_num[smavars_gam_b]) %*% socweight)
+
+
+
+#####################################
+#### EXTRACURRICULAR ACTIVITIES #####
+#####################################
+index <- colnames(y1_data_num)[which(substr(colnames(y1_data_num),1,6) == "sai_ss")]
+
+for(i in index){
+  y1_data_num[,i]<-recode(y1_data_num[,i], "Less than one day per month"=1, "One day every month"=2, "Once every 2 weeks"=3, "1"=4, "2"=5, 
+                          "3"=6, "4"=7, "5"=8, "6"=9, "7"=10, "Don't know"=0, "0"=0)
+  #y1_data_num[is.na(y1_data_num[,i]),i] <- 0
+}
+
+#social enrichment sums
+y1_data_num$social_enrich_tot <- with(y1_data_num, sai_ss_sboard_perwk_p_l	+
+                                                 sai_ss_collect_perwk_p_l	+
+                                                 sai_ss_base_perwk_p_l	+
+                                                 sai_ss_basket_perwk_p_l +	
+                                                 sai_ss_climb_perwk_p_l	+
+                                                 sai_ss_fhock_perwk_p_l	+
+                                                 sai_ss_fball_perwk_p_l	+
+                                                 sai_ss_gym_perwk_p_l	+
+                                                 sai_ss_ihock_perwk_p_l +	
+                                                 sai_ss_polo_perwk_p_l	+
+                                                 sai_ss_iskate_perwk_p_l +	
+                                                 sai_ss_m_arts_perwk_p_l	+
+                                                 sai_ss_lax_perwk_p_l	+
+                                                 sai_ss_rugby_perwk_p_l +	
+                                                 sai_ss_skate_perwk_p_l +	
+                                                 sai_ss_dance_perwk_p_l+	
+                                                 sai_ss_soc_perwk_p_l	+
+                                                 sai_ss_surf_perwk_p_l	+
+                                                 sai_ss_wpolo_perwk_p_l+	
+                                                 sai_ss_tennis_perwk_p_l+	
+                                                 sai_ss_run_perwk_p_l	+
+                                                 sai_ss_mma_perwk_p_l	+
+                                                 sai_ss_vball_perwk_p_l+	
+                                                 sai_ss_yoga_perwk_p_l	+
+                                                 sai_ss_music_perwk_p_l+	
+                                                 sai_ss_art_perwk_p_l	+
+                                                 sai_ss_drama_perwk_p_l+	
+                                                 sai_ss_crafts_perwk_p_l+	
+                                                 sai_ss_chess_perwk_p_l)
+
+y1_data_num$social_enrich_ARTS_tot <- with(y1_data_num, sai_ss_collect_perwk_p_l	+
+                                           sai_ss_music_perwk_p_l+	
+                                            sai_ss_art_perwk_p_l	+
+                                            sai_ss_drama_perwk_p_l+	
+                                            sai_ss_crafts_perwk_p_l+	
+                                            sai_ss_chess_perwk_p_l)                        
+y1_data_num$social_enrich_TEAM_tot <- with(y1_data_num, sai_ss_base_perwk_p_l	+
+                                            sai_ss_basket_perwk_p_l+	
+                                            sai_ss_fhock_perwk_p_l	+
+                                            sai_ss_fball_perwk_p_l	+
+                                            sai_ss_ihock_perwk_p_l+	
+                                            sai_ss_polo_perwk_p_l	+
+                                            sai_ss_lax_perwk_p_l	+
+                                            sai_ss_rugby_perwk_p_l+	
+                                            sai_ss_soc_perwk_p_l	+
+                                            sai_ss_wpolo_perwk_p_l+	
+                                            sai_ss_tennis_perwk_p_l+	
+                                            sai_ss_vball_perwk_p_l)
+y1_data_num$social_enrich_INDIV_tot <- with(y1_data_num, sai_ss_sboard_perwk_p_l	+
+                                             sai_ss_climb_perwk_p_l	+
+                                             sai_ss_gym_perwk_p_l	+
+                                             sai_ss_iskate_perwk_p_l+	
+                                             sai_ss_m_arts_perwk_p_l	+
+                                             sai_ss_skate_perwk_p_l+	
+                                             sai_ss_dance_perwk_p_l+	
+                                             sai_ss_surf_perwk_p_l	+
+                                             sai_ss_run_perwk_p_l	+
+                                             sai_ss_mma_perwk_p_l	+
+                                             sai_ss_yoga_perwk_p_l)
+
+
+
+#####################################
+############# OTHER #################
+#####################################
+
+#Religion
+y1_data_num$religion =as.numeric(y1_data_num$macvs_ss_r_p)
+
+####################################
+##### LABEL AS YEAR 1 ##############
+####################################
+
+icol <- which(names(y1_data_num) %in% c("src_subject_id", "eventname", "abcd_site", "subjectid", "isTwin","FamilyID"))
+colnames(y1_data_num)[-icol] <- paste(colnames(y1_data_num)[-icol], "y1", sep = "_")
+
+#####################################
+############# SAVE ##################
+#####################################
+saveRDS(y1_data_num, file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_coded.Rds")
+save(y1_data_num,file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_coded.RData")
+write.csv(y1_data_num,file ="/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_YEAR1_bx_coded.csv")  
+

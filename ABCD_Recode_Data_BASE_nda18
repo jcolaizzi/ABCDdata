@@ -1,5 +1,5 @@
 # Cleans and recodes baseline data from ABCD_Gather_Data. No imaging or biospecimen data. 
-#OUTPUTS: baseline data renamed, recoded, summed, averaged, etc. df = bs_data_num, file = "ABCD_BASE_bx_coded.RData"
+# OUTPUTS: baseline data renamed, recoded, summed, averaged, etc. df = bs_data_num, file = "ABCD_BASE_bx_coded.RData"
 
 # R Code:  
 library(boot)
@@ -23,11 +23,12 @@ loadRData <- function(fileName){
 #rm(list=ls())
 
 
-# Data Directory
-data.dir <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/"
-setwd <- "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/Stress/ABCD_Gather_Data/"
+# Set data and working directories
+data.dir <- "____________"
+setwd <- "_______"
 
-bsdata <- loadRData("/Volumes/Labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_data.RDATA") #loads bsdata df 
+#load baseline df created with ABCD_Gather_Data
+bsdata <- loadRData("ABCD_BASE_bx_data.RDATA") #loads bsdata df 
 bs_data_num <- bsdata
 
 
@@ -559,7 +560,7 @@ colnames(bs_data_num)[-icol] <- paste(colnames(bs_data_num)[-icol], "bs", sep = 
 #####################################
 ############# SAVE ##################
 #####################################
-saveRDS(bs_data_num, file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_coded.Rds")
-save(bs_data_num,file = "/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_coded.RData")
-write.csv(bs_data_num,file ="/Volumes/labs/ABCD_studydata/workbench.Colaizzi/ABCD_Gather_Data/ABCD_BASE_bx_coded.csv")  
+saveRDS(bs_data_num, file = "ABCD_BASE_bx_coded.Rds")
+save(bs_data_num,file = "ABCD_BASE_bx_coded.RData")
+write.csv(bs_data_num,file ="ABCD_BASE_bx_coded.csv")  
 
